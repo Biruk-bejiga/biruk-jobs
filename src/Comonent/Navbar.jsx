@@ -1,4 +1,3 @@
-import React from 'react'
 import {NavLink} from 'react-router-dom'
 import logo from '../assets/image/logo.png'
 
@@ -38,6 +37,10 @@ const Navbar = () => {
                 <NavLink
                   to="/add-job"
                   className={linkClass} >Add Job
+                  </NavLink>
+                <NavLink
+                  to="/admin"
+                  className={linkClass} >Admin
                   </NavLink>
               </div>
             </div>
