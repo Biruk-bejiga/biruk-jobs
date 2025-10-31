@@ -1,13 +1,14 @@
-import React from 'react'
-import {useParams, useLoaderData, useNavigate} from 'react-router-dom'
 import { FaArrowLeft,FaMapMarked } from 'react-icons/fa';
-import { Link } from 'react-router-dom';
+import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'react-toastify'
+import { useMemo } from 'react';
+import { useJobs } from '../hooks/useJobs.js';
  
-const JobPage = ({deleteJob}) => {
-    const navigate = useNavigate()
-    const {id} = useParams();
-    const job = useLoaderData();
+const JobPage = () => {
+  const navigate = useNavigate()
+  const {id} = useParams();
+  const { deleteJob, getJobById, isLoading } = useJobs();
+  const job = useMemo(() => getJobById(id), [getJobById, id]);
 
     const onDeleteClick = async (jobId) => {
       const conifrm = window.confirm('Are you sure you want to delet this listing?');
@@ -18,6 +19,14 @@ const JobPage = ({deleteJob}) => {
 
       toast.success('Job deleted successfully!')
       navigate('/jobs');
+    }
+
+    if (!isLoading && !job) {
+      return <Navigate to="/jobs" replace />;
+    }
+
+    if (!job) {
+      return null;
     }
   return (
     <>
@@ -70,10 +79,10 @@ const JobPage = ({deleteJob}) => {
             <div className="bg-white p-6 rounded-lg shadow-md">
               <h3 className="text-xl font-bold mb-6">Company Info</h3>
 
-              <h2 className="text-2xl">{job.company.name}</h2>
+              <h2 className="text-2xl">{job.company?.name ?? 'Unknown Company'}</h2>
 
               <p className="my-2">
-                {job.company.description}
+                {job.company?.description ?? 'No company description provided.'}
               </p>
 
               <hr className="my-4" />
@@ -81,12 +90,12 @@ const JobPage = ({deleteJob}) => {
               <h3 className="text-xl">Contact Email:</h3>
 
               <p className="my-2 bg-indigo-100 p-2 font-bold">
-                {job.company.contactEmail}
+                {job.company?.contactEmail ?? 'Not provided'}
               </p>
 
               <h3 className="text-xl">Contact Phone:</h3>
 
-              <p className="my-2 bg-indigo-100 p-2 font-bold">{job.company.contactPhone}</p>
+              <p className="my-2 bg-indigo-100 p-2 font-bold">{job.company?.contactPhone ?? 'Not provided'}</p>
             </div>
 
             <div className="bg-white p-6 rounded-lg shadow-md mt-6">
@@ -109,10 +118,5 @@ const JobPage = ({deleteJob}) => {
     </>
   );
 }
-const jobLoader = async ({params}) => {
-  const res = await fetch(`/api/jobs/${params.id}`)
-  const data = await res.json()
-  return data
-}
 
-export { JobPage as default ,jobLoader};
+export default JobPage;

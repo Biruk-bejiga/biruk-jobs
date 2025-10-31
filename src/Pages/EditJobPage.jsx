@@ -1,22 +1,37 @@
-import React from 'react'
-import { useState } from 'react';
-import { useParams, useLoaderData, useNavigate} from 'react-router-dom'
+import { useEffect, useMemo, useState } from 'react';
+import { Navigate, useNavigate, useParams } from 'react-router-dom'
 import { toast} from 'react-toastify';
+import { useJobs } from '../hooks/useJobs.js';
 
 
-const EditJobPage = ({updatedJobSubmit}) => {
+const EditJobPage = () => {
     const navigate = useNavigate();
     const {id} = useParams();
-    const job = useLoaderData();
-    const [title ,setTitle] = useState(job.title);
-  const [type ,setType] = useState(job.type);
-  const [location ,setLocation] = useState(job.location);
-  const [description ,setDescription] = useState(job.description);
-  const [salary ,setSalary] = useState(job.salary);
-  const [companyName ,setCompanyName] = useState(job.company.name);
-  const [companyDescription ,setCompanyDescription] = useState(job.company.description);
-  const [contactEmail ,setContactEmail] = useState(job.company.contactEmail);
-  const [contactPhone ,setContactPhone] = useState(job.company.contactPhone);
+    const { updateJob, getJobById, isLoading } = useJobs();
+    const job = useMemo(() => getJobById(id), [getJobById, id]);
+
+    const [title ,setTitle] = useState(job?.title ?? '');
+  const [type ,setType] = useState(job?.type ?? 'Full-Time');
+  const [location ,setLocation] = useState(job?.location ?? '');
+  const [description ,setDescription] = useState(job?.description ?? '');
+  const [salary ,setSalary] = useState(job?.salary ?? 'Under $50K');
+  const [companyName ,setCompanyName] = useState(job?.company?.name ?? '');
+  const [companyDescription ,setCompanyDescription] = useState(job?.company?.description ?? '');
+  const [contactEmail ,setContactEmail] = useState(job?.company?.contactEmail ?? '');
+  const [contactPhone ,setContactPhone] = useState(job?.company?.contactPhone ?? '');
+
+  useEffect(() => {
+    if (!job) return;
+    setTitle(job.title);
+    setType(job.type);
+    setLocation(job.location);
+    setDescription(job.description);
+    setSalary(job.salary);
+    setCompanyName(job.company?.name ?? '');
+    setCompanyDescription(job.company?.description ?? '');
+    setContactEmail(job.company?.contactEmail ?? '');
+    setContactPhone(job.company?.contactPhone ?? '');
+  }, [job]);
 
   const submitForm = (e) => {
     e.preventDefault();
@@ -34,9 +49,13 @@ const EditJobPage = ({updatedJobSubmit}) => {
         contactPhone
       }
     }
-    updatedJobSubmit(updatedJob);
+    updateJob(id, updatedJob);
     toast.success('Job updated successfully!');
     return navigate(`/jobs/${id}`);
+  }
+
+  if (!isLoading && !job) {
+    return <Navigate to="/jobs" replace />;
   }
 
   return (
