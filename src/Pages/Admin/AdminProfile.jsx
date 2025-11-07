@@ -34,7 +34,29 @@ const AdminProfile = () => {
   }, [profile.name]);
 
   useEffect(() => {
+    // fetch profile from backend on mount
+    let cancelled = false;
+    (async () => {
+      const token = window.localStorage.getItem('accessToken');
+      try {
+        const res = await fetch('/api/admin/profile', {
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+          credentials: 'include',
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!cancelled && data) {
+          setProfile(data);
+          setPendingProfile(data);
+        }
+      } catch (err) {
+        // ignore - frontend can work offline with defaults
+        // console.error('Failed to load profile', err);
+      }
+    })();
+
     return () => {
+      cancelled = true;
       if (avatarPreview) {
         URL.revokeObjectURL(avatarPreview);
       }
@@ -47,7 +69,34 @@ const AdminProfile = () => {
 
   const handleSubmitProfile = (event) => {
     event.preventDefault();
-    setProfile({ ...pendingProfile });
+    // send to backend and then update local state
+    (async () => {
+      const token = window.localStorage.getItem('accessToken');
+      try {
+        const res = await fetch('/api/admin/profile', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          credentials: 'include',
+          body: JSON.stringify(pendingProfile),
+        });
+        if (!res.ok) {
+          const text = await res.text();
+          alert('Failed to save profile: ' + text);
+          return;
+        }
+        const saved = await res.json();
+        setProfile(saved);
+        setPendingProfile(saved);
+        alert('Profile saved');
+      } catch (err) {
+        // fallback to local update
+        setProfile({ ...pendingProfile });
+        alert('Saved locally (server unavailable)');
+      }
+    })();
   };
 
   const handleSubmitPassword = (event) => {
