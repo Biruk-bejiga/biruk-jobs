@@ -1,10 +1,10 @@
-import React from 'react'
+import PropTypes from 'prop-types';
 import { useState, useEffect } from 'react';
 import JobListing from './JobListing'
 import Spinner from './Spinner';
 
 const JobListings = ({isHome = false}) => {
-    const [jobs,setjobs] = useState([]);
+    const [jobs,setJobs] = useState([]);
     const [loading,setLoading] = useState(true);
     useEffect(() => {
       const apiUrl = isHome ? '/api/jobs?_limit=3' : '/api/jobs';
@@ -12,7 +12,7 @@ const JobListings = ({isHome = false}) => {
         try {
           const res = await fetch(apiUrl);
           const data = await res.json();
-          setjobs(data);
+          setJobs(data);
         } catch (error) {
           console.log("error fetchin data", error);
         }finally {
@@ -20,7 +20,7 @@ const JobListings = ({isHome = false}) => {
         }
       }
       fetchJobs();
-    }, []);
+    }, [isHome]);
   return (
     <section className="bg-blue-50 px-4 py-10">
       <div className="container-xl lg:container m-auto">
@@ -44,3 +44,7 @@ const JobListings = ({isHome = false}) => {
 }
 
 export default JobListings
+
+JobListings.propTypes = {
+  isHome: PropTypes.bool,
+}

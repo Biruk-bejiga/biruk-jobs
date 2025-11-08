@@ -21,7 +21,6 @@ export const useJobs = () => {
         await seedIfEmpty(jobsJson.jobs || []);
       } catch (err) {
         // seeding failed — continue, we'll still try to read whatever exists
-        // eslint-disable-next-line no-console
         console.error("Error seeding DB:", err);
       }
 
@@ -29,7 +28,6 @@ export const useJobs = () => {
         const all = await getAllJobs();
         if (mounted) setJobs(all);
       } catch (err) {
-        // eslint-disable-next-line no-console
         console.error("Failed to load jobs from IndexedDB:", err);
       }
     })();

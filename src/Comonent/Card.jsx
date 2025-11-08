@@ -1,4 +1,4 @@
-import React from 'react'
+import PropTypes from 'prop-types'
 
 const Card = ({children, bg='bg-gray-100'}) => {
   return (
@@ -7,3 +7,8 @@ const Card = ({children, bg='bg-gray-100'}) => {
 }
 
 export default Card
+
+Card.propTypes = {
+  children: PropTypes.node.isRequired,
+  bg: PropTypes.string,
+}

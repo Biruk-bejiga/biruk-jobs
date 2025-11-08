@@ -1,4 +1,5 @@
-import React, { useState } from 'react'
+import PropTypes from 'prop-types'
+import { useState } from 'react'
 import { Link } from 'react-router-dom';
 import {FaMapMarker} from 'react-icons/fa'
 
@@ -6,8 +7,8 @@ import {FaMapMarker} from 'react-icons/fa'
 const JobListing = ({job}) => {
     const [showFullDescription, setShowFullDescription]=useState(false);
     let description = job.description;
-    if(!showFullDescription) {
-        description = description.substring(0,90) + '...';
+  if(!showFullDescription) {
+    description = description.substring(0,90) + '...';
     }
   return (
     <div className="bg-white rounded-xl shadow-md relative">
@@ -45,3 +46,14 @@ const JobListing = ({job}) => {
 }
 
 export default JobListing
+
+JobListing.propTypes = {
+  job: PropTypes.shape({
+    id: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
+    title: PropTypes.string.isRequired,
+    description: PropTypes.string.isRequired,
+    location: PropTypes.string.isRequired,
+    salary: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
+    type: PropTypes.string.isRequired,
+  }).isRequired,
+}
