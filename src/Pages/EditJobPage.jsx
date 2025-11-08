@@ -1,7 +1,7 @@
-import React from 'react'
-import { useState } from 'react';
-import { useParams, useLoaderData, useNavigate} from 'react-router-dom'
-import { toast} from 'react-toastify';
+import PropTypes from 'prop-types'
+import { useState } from 'react'
+import { useParams, useLoaderData, useNavigate } from 'react-router-dom'
+import { toast } from 'react-toastify'
 
 
 const EditJobPage = ({updatedJobSubmit}) => {
@@ -17,8 +17,9 @@ const EditJobPage = ({updatedJobSubmit}) => {
   const [companyDescription ,setCompanyDescription] = useState(job.company.description);
   const [contactEmail ,setContactEmail] = useState(job.company.contactEmail);
   const [contactPhone ,setContactPhone] = useState(job.company.contactPhone);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const submitForm = (e) => {
+  const submitForm = async (e) => {
     e.preventDefault();
     const updatedJob = {
         id,
@@ -34,9 +35,17 @@ const EditJobPage = ({updatedJobSubmit}) => {
         contactPhone
       }
     }
-    updatedJobSubmit(updatedJob);
-    toast.success('Job updated successfully!');
-    return navigate(`/jobs/${id}`);
+    try {
+      setIsSubmitting(true);
+      await updatedJobSubmit(updatedJob);
+      toast.success('Job updated successfully!');
+      navigate(`/jobs/${id}`);
+    } catch (error) {
+      const message = error?.message ?? 'Failed to update job. Please try again.';
+      toast.error(message);
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -211,10 +220,11 @@ const EditJobPage = ({updatedJobSubmit}) => {
 
             <div>
               <button
-                className="bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2 px-4 rounded-full w-full focus:outline-none focus:shadow-outline"
+                className="bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2 px-4 rounded-full w-full focus:outline-none focus:shadow-outline disabled:cursor-not-allowed disabled:bg-indigo-300"
                 type="submit"
+                disabled={isSubmitting}
               >
-                Update Job
+                {isSubmitting ? 'Updating…' : 'Update Job'}
               </button>
             </div>
           </form>
@@ -222,6 +232,10 @@ const EditJobPage = ({updatedJobSubmit}) => {
       </div>
     </section>
   )
+}
+
+EditJobPage.propTypes = {
+  updatedJobSubmit: PropTypes.func.isRequired,
 }
 
 export default EditJobPage

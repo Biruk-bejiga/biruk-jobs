@@ -1,23 +1,31 @@
-import React from 'react'
-import {useParams, useLoaderData, useNavigate} from 'react-router-dom'
-import { FaArrowLeft,FaMapMarked } from 'react-icons/fa';
-import { Link } from 'react-router-dom';
+import PropTypes from 'prop-types'
+import { useState } from 'react'
+import { useLoaderData, useNavigate } from 'react-router-dom'
+import { FaArrowLeft, FaMapMarked } from 'react-icons/fa'
+import { Link } from 'react-router-dom'
 import { toast } from 'react-toastify'
  
 const JobPage = ({deleteJob}) => {
     const navigate = useNavigate()
-    const {id} = useParams();
     const job = useLoaderData();
+    const [isDeleting, setIsDeleting] = useState(false);
 
     const onDeleteClick = async (jobId) => {
-      const conifrm = window.confirm('Are you sure you want to delet this listing?');
+      const confirmDelete = window.confirm('Are you sure you want to delete this listing?');
 
-      if(!conifrm) return;
+      if (!confirmDelete) return;
 
-      deleteJob(jobId);
-
-      toast.success('Job deleted successfully!')
-      navigate('/jobs');
+      try {
+        setIsDeleting(true);
+        await deleteJob(jobId);
+        toast.success('Job deleted successfully!');
+        navigate('/jobs');
+      } catch (error) {
+        const message = error?.message ?? 'Failed to delete job. Please try again.';
+        toast.error(message);
+      } finally {
+        setIsDeleting(false);
+      }
     }
   return (
     <>
@@ -97,9 +105,11 @@ const JobPage = ({deleteJob}) => {
                 >Edit Job
                 </Link>
               <button
-                onClick={() => onDeleteClick(job.id)} className="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-full w-full focus:outline-none focus:shadow-outline mt-4 block"
+                onClick={() => onDeleteClick(job.id)}
+                className={`bg-red-500 ${isDeleting ? 'opacity-75 cursor-not-allowed' : 'hover:bg-red-600'} text-white font-bold py-2 px-4 rounded-full w-full focus:outline-none focus:shadow-outline mt-4 block`}
+                disabled={isDeleting}
               >
-                Delete Job
+                {isDeleting ? 'Deleting...' : 'Delete Job'}
               </button>
             </div>
           </aside>
@@ -109,6 +119,10 @@ const JobPage = ({deleteJob}) => {
     </>
   );
 }
+JobPage.propTypes = {
+  deleteJob: PropTypes.func.isRequired,
+};
+
 const jobLoader = async ({params}) => {
   const res = await fetch(`/api/jobs/${params.id}`)
   const data = await res.json()

@@ -1,22 +1,23 @@
-import React from 'react'
-import { useState } from 'react';
+import PropTypes from 'prop-types'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
 
-function AddJobPage({addJobSubmit}) {
-  const [title ,setTitle] = useState('');
-  const [type ,setType] = useState('Full-Time');
-  const [location ,setLocation] = useState('');
-  const [description ,setDescription] = useState('');
-  const [salary ,setSalary] = useState('Under $50K');
-  const [companyName ,setCompanyName] = useState('');
-  const [companyDescription ,setCompanyDescription] = useState('');
-  const [contactEmail ,setContactEmail] = useState('');
-  const [contactPhone ,setContactPhone] = useState('');
+function AddJobPage({ addJobSubmit }) {
+  const [title, setTitle] = useState('')
+  const [type, setType] = useState('Full-Time')
+  const [location, setLocation] = useState('')
+  const [description, setDescription] = useState('')
+  const [salary, setSalary] = useState('Under $50K')
+  const [companyName, setCompanyName] = useState('')
+  const [companyDescription, setCompanyDescription] = useState('')
+  const [contactEmail, setContactEmail] = useState('')
+  const [contactPhone, setContactPhone] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const navigate = useNavigate();
 
-  const submitForm = (e) => {
+  const submitForm = async (e) => {
     e.preventDefault();
     const newJob = {
       type,
@@ -31,9 +32,17 @@ function AddJobPage({addJobSubmit}) {
         contactPhone
       }
     }
-    addJobSubmit(newJob);
-    toast.success('Job added successfully!');
-    return navigate('/jobs');
+    try {
+      setIsSubmitting(true)
+      await addJobSubmit(newJob)
+      toast.success('Job added successfully!')
+      navigate('/jobs')
+    } catch (error) {
+      const message = error?.message ?? 'Failed to add job. Please try again.'
+      toast.error(message)
+    } finally {
+      setIsSubmitting(false)
+    }
   }
   return (
     
@@ -208,10 +217,11 @@ function AddJobPage({addJobSubmit}) {
 
             <div>
               <button
-                className="bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2 px-4 rounded-full w-full focus:outline-none focus:shadow-outline"
+                className="bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2 px-4 rounded-full w-full focus:outline-none focus:shadow-outline disabled:cursor-not-allowed disabled:bg-indigo-300"
                 type="submit"
+                disabled={isSubmitting}
               >
-                Add Job
+                {isSubmitting ? 'Adding…' : 'Add Job'}
               </button>
             </div>
           </form>
@@ -219,6 +229,10 @@ function AddJobPage({addJobSubmit}) {
       </div>
     </section>
   );
+}
+
+AddJobPage.propTypes = {
+  addJobSubmit: PropTypes.func.isRequired,
 }
 
 export default AddJobPage
