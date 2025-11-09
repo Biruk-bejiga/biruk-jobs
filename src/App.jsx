@@ -16,6 +16,18 @@ import AdminJobs from './Pages/Admin/AdminJobs'
 import AdminProfile from './Pages/Admin/AdminProfile'
 import AdminDisputes from './Pages/Admin/AdminDisputes'
 import AdminReports from './Pages/Admin/AdminReports'
+import EmployerLayout from './layouts/EmployerLayout'
+import EmployerDashboard from './Pages/Employer/EmployerDashboard'
+import EmployerJobs from './Pages/Employer/EmployerJobs'
+import EmployerApplications from './Pages/Employer/EmployerApplications'
+import EmployerTeam from './Pages/Employer/EmployerTeam'
+import EmployerProfile from './Pages/Employer/EmployerProfile'
+import EmployeeLayout from './layouts/EmployeeLayout'
+import EmployeeDashboard from './Pages/Employee/EmployeeDashboard'
+import EmployeeJobs from './Pages/Employee/EmployeeJobs'
+import EmployeeApplications from './Pages/Employee/EmployeeApplications'
+import EmployeeFavorites from './Pages/Employee/EmployeeFavorites'
+import EmployeeProfile from './Pages/Employee/EmployeeProfile'
 import ProtectedRoute from './Comonent/ProtectedRoute'
 import LoginPage from './Pages/LoginPage'
 import { useAuth } from './context/AuthContext'
@@ -107,13 +119,50 @@ const App = () => {
               <Route path='/login' element={<LoginPage />} />
               <Route path='*' element={<NotFoundPage />} />
             </Route>
-            <Route path='/admin' element={<ProtectedRoute redirectTo='/login'><AdminLayout /></ProtectedRoute>}>
+            <Route
+              path='/admin'
+              element={
+                <ProtectedRoute redirectTo='/login' allowedRoles={['admin']}>
+                  <AdminLayout />
+                </ProtectedRoute>
+              }
+            >
               <Route index element={<AdminDashboard />} />
               <Route path='users' element={<AdminUsers />} />
               <Route path='jobs' element={<AdminJobs />} />
               <Route path='disputes' element={<AdminDisputes />} />
               <Route path='reports' element={<AdminReports />} />
               <Route path='profile' element={<AdminProfile />} />
+              <Route path='*' element={<NotFoundPage />} />
+            </Route>
+            <Route
+              path='/employer'
+              element={
+                <ProtectedRoute redirectTo='/login' allowedRoles={['employer']}>
+                  <EmployerLayout />
+                </ProtectedRoute>
+              }
+            >
+              <Route index element={<EmployerDashboard />} />
+              <Route path='jobs' element={<EmployerJobs />} />
+              <Route path='applications' element={<EmployerApplications />} />
+              <Route path='team' element={<EmployerTeam />} />
+              <Route path='profile' element={<EmployerProfile />} />
+              <Route path='*' element={<NotFoundPage />} />
+            </Route>
+            <Route
+              path='/employee'
+              element={
+                <ProtectedRoute redirectTo='/login' allowedRoles={['employee']}>
+                  <EmployeeLayout />
+                </ProtectedRoute>
+              }
+            >
+              <Route index element={<EmployeeDashboard />} />
+              <Route path='jobs' element={<EmployeeJobs />} />
+              <Route path='applications' element={<EmployeeApplications />} />
+              <Route path='favorites' element={<EmployeeFavorites />} />
+              <Route path='profile' element={<EmployeeProfile />} />
               <Route path='*' element={<NotFoundPage />} />
             </Route>
           </>
