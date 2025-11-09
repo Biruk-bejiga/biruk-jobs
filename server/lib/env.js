@@ -1,8 +1,15 @@
 import process from 'process';
 import dotenv from 'dotenv';
+import { config } from 'dotenv';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 let cachedEnv;
-
+const __dirname = dirname(fileURLToPath(import.meta.url));
+config({
+  path: join(__dirname, '../.env'),
+  override: false,
+});
 export function loadEnv() {
   if (cachedEnv) {
     return cachedEnv;
