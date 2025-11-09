@@ -158,6 +158,34 @@ export const jobApplicationMessages = pgTable('job_application_messages', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
+export const jobFavorites = pgTable(
+  'job_favorites',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    jobId: uuid('job_id')
+      .notNull()
+      .references(() => jobs.id, { onDelete: 'cascade' }),
+    employeeId: uuid('employee_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (table) => ({
+    uniqueFavorite: uniqueIndex('job_favorites_unique_idx').on(table.jobId, table.employeeId),
+  }),
+);
+
+export const jobApplicationStatusHistory = pgTable('job_application_status_history', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  applicationId: uuid('application_id')
+    .notNull()
+    .references(() => jobApplications.id, { onDelete: 'cascade' }),
+  status: applicationStatusEnum('status').notNull(),
+  changedById: uuid('changed_by_id').references(() => users.id, { onDelete: 'set null' }),
+  note: text('note'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
 export const refreshTokens = pgTable(
   'refresh_tokens',
   {
@@ -190,6 +218,9 @@ export const userRelations = relations(users, ({ one, many }) => ({
   applications: many(jobApplications),
   refreshTokens: many(refreshTokens),
   messages: many(jobApplicationMessages),
+  favorites: many(jobFavorites, {
+    relationName: 'userFavorites',
+  }),
 }));
 
 export const employerRelations = relations(employerProfiles, ({ one, many }) => ({
@@ -208,6 +239,9 @@ export const employeeRelations = relations(employeeProfiles, ({ one, many }) => 
     references: [users.id],
   }),
   applications: many(jobApplications),
+  favorites: many(jobFavorites, {
+    relationName: 'employeeFavorites',
+  }),
 }));
 
 export const jobRelations = relations(jobs, ({ one, many }) => ({
@@ -216,6 +250,9 @@ export const jobRelations = relations(jobs, ({ one, many }) => ({
     references: [users.id],
   }),
   applications: many(jobApplications),
+  favorites: many(jobFavorites, {
+    relationName: 'jobFavorites',
+  }),
 }));
 
 export const jobApplicationRelations = relations(jobApplications, ({ one, many }) => ({
@@ -228,6 +265,7 @@ export const jobApplicationRelations = relations(jobApplications, ({ one, many }
     references: [users.id],
   }),
   messages: many(jobApplicationMessages),
+  history: many(jobApplicationStatusHistory),
 }));
 
 export const jobApplicationMessageRelations = relations(jobApplicationMessages, ({ one }) => ({
@@ -237,6 +275,28 @@ export const jobApplicationMessageRelations = relations(jobApplicationMessages, 
   }),
   author: one(users, {
     fields: [jobApplicationMessages.authorId],
+    references: [users.id],
+  }),
+}));
+
+export const jobFavoriteRelations = relations(jobFavorites, ({ one }) => ({
+  job: one(jobs, {
+    fields: [jobFavorites.jobId],
+    references: [jobs.id],
+  }),
+  employee: one(users, {
+    fields: [jobFavorites.employeeId],
+    references: [users.id],
+  }),
+}));
+
+export const jobApplicationStatusHistoryRelations = relations(jobApplicationStatusHistory, ({ one }) => ({
+  application: one(jobApplications, {
+    fields: [jobApplicationStatusHistory.applicationId],
+    references: [jobApplications.id],
+  }),
+  actor: one(users, {
+    fields: [jobApplicationStatusHistory.changedById],
     references: [users.id],
   }),
 }));

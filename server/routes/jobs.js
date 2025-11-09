@@ -36,12 +36,45 @@ const applicationSchema = z.object({
   resumeUrl: z.string().url().optional(),
 });
 
+const listQuerySchema = z.object({
+  status: z.enum(['draft', 'published', 'closed']).optional(),
+  search: z.string().max(255).optional(),
+  location: z.string().max(255).optional(),
+  employmentType: z.enum(['full_time', 'part_time', 'contract', 'temporary', 'internship']).optional(),
+  employmentTypes: z.preprocess((value) => {
+    if (Array.isArray(value)) {
+      return value;
+    }
+    if (typeof value === 'string' && value.trim().length) {
+      return value
+        .split(',')
+        .map((item) => item.trim())
+        .filter(Boolean);
+    }
+    return undefined;
+  }, z.array(z.enum(['full_time', 'part_time', 'contract', 'temporary', 'internship']))).optional(),
+  isRemote: z
+    .preprocess((value) => {
+      if (typeof value === 'boolean') return value;
+      if (typeof value === 'string') {
+        if (value === 'true') return true;
+        if (value === 'false') return false;
+      }
+      return undefined;
+    }, z.boolean())
+    .optional(),
+  salaryMin: z
+    .preprocess((value) => (value === undefined ? undefined : Number(value)), z.number().nonnegative())
+    .optional(),
+  salaryMax: z
+    .preprocess((value) => (value === undefined ? undefined : Number(value)), z.number().nonnegative())
+    .optional(),
+});
+
 router.get('/', async (req, res, next) => {
   try {
-    const jobsList = await listJobs({
-      status: req.query.status,
-      search: req.query.search,
-    });
+    const filters = listQuerySchema.parse(req.query);
+    const jobsList = await listJobs(filters);
     res.json({ data: jobsList });
   } catch (err) {
     next(err);

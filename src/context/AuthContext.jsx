@@ -13,6 +13,16 @@ import Spinner from '../Comonent/Spinner';
 const AuthContext = createContext(undefined);
 const ACCESS_TOKEN_KEY = 'accessToken';
 
+const parseErrorResponse = async (response, fallback) => {
+  try {
+    const body = await response.json();
+    return body?.error?.message ?? body?.message ?? fallback;
+  } catch (error) {
+    console.error('Failed to parse error response', error);
+    return fallback;
+  }
+};
+
 const getStoredToken = () => {
   if (typeof window === 'undefined') {
     return null;
@@ -107,6 +117,25 @@ export const AuthProvider = ({ children }) => {
     [accessToken, persistToken, refreshAccessToken],
   );
 
+  const authFetchJson = useCallback(
+    async (input, init = {}, fallbackMessage = 'Request failed') => {
+      const response = await authFetch(input, init);
+      if (!response.ok) {
+        const message = await parseErrorResponse(response, fallbackMessage);
+        const error = new Error(message);
+        error.status = response.status;
+        throw error;
+      }
+
+      if (response.status === 204) {
+        return null;
+      }
+
+      return response.json();
+    },
+    [authFetch],
+  );
+
   const login = useCallback(
     async (email, password) => {
       try {
@@ -118,15 +147,10 @@ export const AuthProvider = ({ children }) => {
         });
 
         if (!response.ok) {
-          let message = 'Unable to log in with provided credentials.';
-
-          try {
-            const errorBody = await response.json();
-            message = errorBody?.error?.message ?? message;
-          } catch (parseError) {
-            console.error('Failed to parse login error response', parseError);
-          }
-
+          const message = await parseErrorResponse(
+            response,
+            'Unable to log in with provided credentials.',
+          );
           throw new Error(message);
         }
 
@@ -207,6 +231,7 @@ export const AuthProvider = ({ children }) => {
       login,
       logout,
       authFetch,
+      authFetchJson,
       refreshAccessToken,
       persistToken,
       accessToken,
@@ -217,6 +242,7 @@ export const AuthProvider = ({ children }) => {
       login,
       logout,
       authFetch,
+      authFetchJson,
       refreshAccessToken,
       persistToken,
       accessToken,
@@ -238,6 +264,7 @@ AuthProvider.propTypes = {
   children: PropTypes.node.isRequired,
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useAuth = () => {
   const context = useContext(AuthContext);
 

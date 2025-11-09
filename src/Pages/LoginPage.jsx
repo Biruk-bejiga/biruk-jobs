@@ -3,8 +3,21 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import { useAuth } from '../context/AuthContext'
 
+const getDefaultDashboardPath = (role) => {
+  switch (role) {
+    case 'admin':
+      return '/admin'
+    case 'employer':
+      return '/employer'
+    case 'employee':
+      return '/employee'
+    default:
+      return '/'
+  }
+}
+
 const LoginPage = () => {
-  const { login, isAuthenticated } = useAuth()
+  const { login, isAuthenticated, user } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
   const [email, setEmail] = useState('')
@@ -15,9 +28,9 @@ const LoginPage = () => {
   useEffect(() => {
     if (!isAuthenticated) return
 
-    const redirectPath = location.state?.from?.pathname ?? '/admin'
-    navigate(redirectPath, { replace: true })
-  }, [isAuthenticated, location.state, navigate])
+    const redirectTo = location.state?.from?.pathname ?? getDefaultDashboardPath(user?.role)
+    navigate(redirectTo, { replace: true })
+  }, [isAuthenticated, location.state, navigate, user?.role])
 
   const handleSubmit = async (event) => {
     event.preventDefault()
@@ -25,10 +38,10 @@ const LoginPage = () => {
     setIsSubmitting(true)
 
     try {
-      await login(email.trim(), password)
+  const userData = await login(email.trim(), password)
       toast.success('Welcome back!')
-      const redirectPath = location.state?.from?.pathname ?? '/admin'
-      navigate(redirectPath, { replace: true })
+  const redirectPath = location.state?.from?.pathname ?? getDefaultDashboardPath(userData?.role)
+  navigate(redirectPath, { replace: true })
     } catch (err) {
       const message = err?.message ?? 'Unable to sign in. Please try again.'
       setError(message)

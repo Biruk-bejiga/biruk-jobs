@@ -1,4 +1,6 @@
 import express from 'express';
+import path from 'node:path';
+import process from 'node:process';
 import cors from 'cors';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
@@ -10,6 +12,9 @@ import { errorHandler, notFound } from './middleware/errorHandler.js';
 import authRouter from './routes/auth.js';
 import jobsRouter from './routes/jobs.js';
 import adminRouter from './routes/admin.js';
+import employerRouter from './routes/employers.js';
+import employeeRouter from './routes/employees.js';
+import uploadRouter from './routes/uploads.js';
 import { verifyDatabaseConnection } from './db/index.js';
 
 const app = express();
@@ -51,6 +56,16 @@ app.get('/health', async (_req, res, next) => {
 app.use('/api/auth', authRouter);
 app.use('/api/jobs', jobsRouter);
 app.use('/api/admin', adminRouter);
+app.use('/api/employers', employerRouter);
+app.use('/api/employees', employeeRouter);
+app.use('/api/uploads', uploadRouter);
+
+app.use(
+  '/uploads',
+  express.static(path.join(process.cwd(), 'server', 'uploads'), {
+    maxAge: '1d',
+  }),
+);
 
 app.use(notFound);
 app.use(errorHandler);

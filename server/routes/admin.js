@@ -24,6 +24,18 @@ const profileUpdateSchema = z
   })
   .partial();
 
+const listUsersSchema = z.object({
+  role: z.enum(['employer', 'employee', 'admin']).optional(),
+  isActive: z
+    .preprocess((value) => {
+      if (value === undefined) return undefined;
+      if (value === 'true' || value === true) return true;
+      if (value === 'false' || value === false) return false;
+      return undefined;
+    }, z.boolean())
+    .optional(),
+});
+
 function mapAdminProfile(user) {
   return {
     name: user.fullName,
@@ -67,7 +79,8 @@ router.put('/profile', async (req, res, next) => {
 
 router.get('/users', async (req, res, next) => {
   try {
-    const users = await listUsers({ isActive: req.query.isActive !== 'false' });
+    const filters = listUsersSchema.parse(req.query);
+    const users = await listUsers(filters);
     res.json({ data: users });
   } catch (err) {
     next(err);
