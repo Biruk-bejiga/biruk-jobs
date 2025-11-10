@@ -1,8 +1,13 @@
 import PropTypes from 'prop-types';
 import { useMemo, useState } from 'react';
+import { useForm } from 'react-hook-form';
 import { Link, useLoaderData, useNavigate } from 'react-router-dom';
 import { FaArrowLeft, FaMapMarked } from 'react-icons/fa';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { z } from 'zod';
 import { toast } from 'react-toastify';
+import Spinner from '../Comonent/Spinner';
 import { useAuth } from '../context/AuthContext';
 
 const formatEmploymentType = (value) => {
@@ -32,11 +37,91 @@ const formatSalaryRange = (min, max, currency = 'USD') => {
   return 'Salary not disclosed';
 };
 
+const applicationStatusStyles = {
+  submitted: 'bg-slate-100 text-slate-600',
+  in_review: 'bg-indigo-100 text-indigo-600',
+  shortlisted: 'bg-emerald-100 text-emerald-600',
+  rejected: 'bg-rose-100 text-rose-600',
+  withdrawn: 'bg-amber-100 text-amber-600',
+  hired: 'bg-sky-100 text-sky-600',
+};
+
+const applyFormSchema = z.object({
+  resumeUrl: z.string().url('Enter a valid résumé link').max(512, 'Résumé link is too long').optional(),
+  coverLetter: z.string().max(2000, 'Cover letter must be 2000 characters or less').optional(),
+});
+
 const JobPage = ({ deleteJob }) => {
   const navigate = useNavigate();
   const job = useLoaderData();
+  const jobId = job?.id;
   const [isDeleting, setIsDeleting] = useState(false);
-  const { user } = useAuth();
+  const { user, authFetchJson } = useAuth();
+  const queryClient = useQueryClient();
+  const isEmployee = user?.role === 'employee';
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm({
+    resolver: zodResolver(applyFormSchema),
+    defaultValues: {
+      resumeUrl: '',
+      coverLetter: '',
+    },
+  });
+
+  const applicationsQuery = useQuery({
+    queryKey: ['employee', 'applications'],
+    queryFn: async () => {
+      const response = await authFetchJson('/api/employees/applications');
+      return response?.data ?? [];
+    },
+    enabled: isEmployee,
+  });
+
+  const viewerApplication = useMemo(() => {
+    if (!isEmployee || !Array.isArray(applicationsQuery.data) || !jobId) {
+      return null;
+    }
+    const entry = applicationsQuery.data.find((item) => item.job.id === jobId);
+    return entry?.application ?? null;
+  }, [applicationsQuery.data, isEmployee, jobId]);
+
+  const submitApplication = useMutation({
+    mutationFn: async (payload) => {
+      if (!jobId) {
+        throw new Error('Job not found');
+      }
+      const body = {};
+      if (payload.resumeUrl) {
+        body.resumeUrl = payload.resumeUrl;
+      }
+      if (payload.coverLetter) {
+        body.coverLetter = payload.coverLetter;
+      }
+      const response = await authFetchJson(
+        `/api/jobs/${jobId}/apply`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        },
+        'Unable to submit application',
+      );
+      return response?.data ?? null;
+    },
+    onSuccess: () => {
+      toast.success('Application submitted!');
+      reset();
+      queryClient.invalidateQueries({ queryKey: ['employee', 'applications'] });
+    },
+    onError: (error) => {
+      toast.error(error?.message ?? 'Unable to submit application');
+    },
+  });
 
   const employmentLabel = formatEmploymentType(job?.employmentType);
   const salaryLabel = formatSalaryRange(job?.salaryMin, job?.salaryMax, job?.salaryCurrency);
@@ -152,16 +237,146 @@ const JobPage = ({ deleteJob }) => {
 
             <aside className="space-y-6">
               <div className="rounded-lg bg-white p-6 shadow-md">
-                <h3 className="text-xl font-semibold text-slate-900">How to apply</h3>
-                <p className="mt-3 text-sm text-slate-600">
-                  Login or create an account to submit your application and track status updates in real time.
-                </p>
-                <Link
-                  to={user ? '/employee/applications' : '/login'}
-                  className="mt-4 inline-flex h-10 w-full items-center justify-center rounded-lg bg-indigo-600 text-sm font-semibold text-white transition hover:bg-indigo-500"
-                >
-                  {user ? 'View your applications' : 'Sign in to apply'}
-                </Link>
+                <h3 className="text-xl font-semibold text-slate-900">Application</h3>
+                {!user ? (
+                  <>
+                    <p className="mt-3 text-sm text-slate-600">
+                      Login or create an account to submit your application and track status updates in real time.
+                    </p>
+                    <Link
+                      to="/login"
+                      className="mt-4 inline-flex h-10 w-full items-center justify-center rounded-lg bg-indigo-600 text-sm font-semibold text-white transition hover:bg-indigo-500"
+                    >
+                      Sign in to apply
+                    </Link>
+                  </>
+                ) : null}
+
+                {user && !isEmployee ? (
+                  <p className="mt-3 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+                    You&apos;re signed in as {user.role}. Switch to an employee account to submit applications.
+                  </p>
+                ) : null}
+
+                {isEmployee ? (
+                  <div className="mt-4 space-y-4">
+                    {job.status !== 'published' ? (
+                      <p className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
+                        This job is not currently accepting applications.
+                      </p>
+                    ) : null}
+
+                    {job.status === 'published' ? (
+                      <>
+                        {applicationsQuery.isLoading ? (
+                          <div className="flex justify-center py-4">
+                            <Spinner loading />
+                          </div>
+                        ) : null}
+
+                        {applicationsQuery.isError ? (
+                          <p className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-600">
+                            {applicationsQuery.error?.message ?? 'Unable to load your application status.'}
+                          </p>
+                        ) : null}
+
+                        {!applicationsQuery.isLoading && !applicationsQuery.isError ? (
+                          viewerApplication ? (
+                            <div className="space-y-3 rounded-lg border border-slate-200 bg-slate-50 p-4">
+                              <div className="flex items-center justify-between">
+                                <span className="text-sm font-medium text-slate-600">Current status</span>
+                                <span
+                                  className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${
+                                    applicationStatusStyles[viewerApplication.status] ?? applicationStatusStyles.submitted
+                                  }`}
+                                >
+                                  {viewerApplication.status.replace('_', ' ')}
+                                </span>
+                              </div>
+                              <p className="text-xs text-slate-500">
+                                Applied on{' '}
+                                {viewerApplication.submittedAt
+                                  ? new Date(viewerApplication.submittedAt).toLocaleDateString()
+                                  : 'unknown date'}
+                              </p>
+                              <Link
+                                to="/employee/applications"
+                                className="inline-flex h-10 w-full items-center justify-center rounded-lg bg-indigo-600 text-sm font-semibold text-white transition hover:bg-indigo-500"
+                              >
+                                View application updates
+                              </Link>
+                            </div>
+                          ) : (
+                            <form className="space-y-4" onSubmit={handleSubmit((values) => submitApplication.mutate(values))}>
+                              <div>
+                                <label className="text-sm font-medium text-slate-700" htmlFor="resumeUrl">
+                                  Résumé link (optional)
+                                </label>
+                                <input
+                                  id="resumeUrl"
+                                  type="url"
+                                  className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                                  placeholder="https://..."
+                                  {...register('resumeUrl', {
+                                    setValueAs: (value) => {
+                                      if (typeof value !== 'string') {
+                                        return undefined;
+                                      }
+                                      const trimmed = value.trim();
+                                      return trimmed.length ? trimmed : undefined;
+                                    },
+                                  })}
+                                />
+                                {errors.resumeUrl ? (
+                                  <p className="mt-1 text-xs text-rose-600">{errors.resumeUrl.message}</p>
+                                ) : null}
+                              </div>
+
+                              <div>
+                                <label className="text-sm font-medium text-slate-700" htmlFor="coverLetter">
+                                  Cover letter (optional)
+                                </label>
+                                <textarea
+                                  id="coverLetter"
+                                  rows={5}
+                                  className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                                  placeholder="Share why you&apos;re a great fit..."
+                                  {...register('coverLetter', {
+                                    setValueAs: (value) => {
+                                      if (typeof value !== 'string') {
+                                        return undefined;
+                                      }
+                                      const trimmed = value.trim();
+                                      return trimmed.length ? trimmed : undefined;
+                                    },
+                                  })}
+                                />
+                                {errors.coverLetter ? (
+                                  <p className="mt-1 text-xs text-rose-600">{errors.coverLetter.message}</p>
+                                ) : null}
+                              </div>
+
+                              <button
+                                type="submit"
+                                className="inline-flex h-10 w-full items-center justify-center rounded-lg bg-indigo-600 text-sm font-semibold text-white transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-70"
+                                disabled={submitApplication.isPending}
+                              >
+                                {submitApplication.isPending ? 'Submitting…' : 'Submit application'}
+                              </button>
+                              <p className="text-xs text-slate-500">
+                                Track all submissions from your{' '}
+                                <Link className="font-medium text-indigo-600 hover:text-indigo-500" to="/employee/applications">
+                                  applications dashboard
+                                </Link>
+                                .
+                              </p>
+                            </form>
+                          )
+                        ) : null}
+                      </>
+                    ) : null}
+                  </div>
+                ) : null}
               </div>
 
               {canManage ? (
