@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import AdminSidebar from '../Comonent/AdminSidebar';
 import AdminTopbar from '../Comonent/AdminTopbar';
+import { useAuth } from '../context/AuthContext';
 
 const getPreferredTheme = () => {
   if (typeof window === 'undefined') {
@@ -66,6 +67,8 @@ const AdminLayout = () => {
     setIsDarkMode((prev) => !prev);
   };
 
+  const { user } = useAuth();
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 transition-colors duration-200 dark:bg-slate-950 dark:text-slate-100">
       <div className="flex min-h-screen">
@@ -85,6 +88,7 @@ const AdminLayout = () => {
             onToggleSidebar={handleToggleSidebar}
             onToggleTheme={handleToggleTheme}
             isDarkMode={isDarkMode}
+            user={user}
           />
           <main className="flex-1 px-4 py-6 sm:px-6 lg:px-10">
             <Outlet />

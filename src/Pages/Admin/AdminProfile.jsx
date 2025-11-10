@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { FiCamera, FiLock, FiMail, FiUser } from 'react-icons/fi';
+import { toast } from 'react-toastify';
 
 const initialProfile = {
   name: 'Alex Bennett',
@@ -102,10 +103,83 @@ const AdminProfile = () => {
   const handleSubmitPassword = (event) => {
     event.preventDefault();
     if (passwordFields.newPassword !== passwordFields.confirmPassword) {
+      toast.error('New passwords do not match');
       return;
     }
 
-    setPasswordFields({ currentPassword: '', newPassword: '', confirmPassword: '' });
+    (async () => {
+      const token = window.localStorage.getItem('accessToken');
+      try {
+        const res = await fetch('/api/admin/profile/password', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            currentPassword: passwordFields.currentPassword,
+            newPassword: passwordFields.newPassword,
+          }),
+        });
+
+        if (!res.ok) {
+          const text = await res.text();
+          toast.error('Failed to update password: ' + text);
+          return;
+        }
+
+        setPasswordFields({ currentPassword: '', newPassword: '', confirmPassword: '' });
+        toast.success('Password updated successfully');
+      } catch (err) {
+        toast.error(err.message ?? 'Failed to update password');
+      }
+    })();
+  };
+
+  // create a new admin account
+  const [newAdmin, setNewAdmin] = useState({ email: '', fullName: '', password: '', confirm: '', location: '' });
+
+  const handleCreateAdmin = async (e) => {
+    e.preventDefault();
+    if (!newAdmin.email || !newAdmin.fullName || !newAdmin.password) {
+      toast.error('Please fill required fields');
+      return;
+    }
+    if (newAdmin.password !== newAdmin.confirm) {
+      toast.error('Passwords do not match');
+      return;
+    }
+
+    try {
+      const token = window.localStorage.getItem('accessToken');
+      const res = await fetch('/api/auth/register/admin', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          email: newAdmin.email,
+          fullName: newAdmin.fullName,
+          password: newAdmin.password,
+          location: newAdmin.location || undefined,
+        }),
+      });
+
+      if (!res.ok) {
+        const text = await res.text();
+        toast.error('Failed to create admin: ' + text);
+        return;
+      }
+
+      const data = await res.json();
+      toast.success(`Created admin ${data.data?.email ?? newAdmin.email}`);
+      setNewAdmin({ email: '', fullName: '', password: '', confirm: '', location: '' });
+    } catch (err) {
+      toast.error(err.message ?? 'Failed to create admin');
+    }
   };
 
   return (
@@ -239,6 +313,95 @@ const AdminProfile = () => {
                 className="rounded-lg border border-transparent bg-indigo-600 px-4 py-2 font-medium text-white shadow-sm transition hover:bg-indigo-500"
               >
                 Save Changes
+              </button>
+            </div>
+          </form>
+
+          <form
+            onSubmit={handleCreateAdmin}
+            className="space-y-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900"
+          >
+            <div>
+              <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Create Admin Account</h3>
+              <p className="text-sm text-slate-500 dark:text-slate-400">
+                Provision an additional platform administrator. Password must be at least 12 characters.
+              </p>
+            </div>
+
+            <div className="grid gap-5 md:grid-cols-2">
+              <label className="flex flex-col gap-2 text-sm">
+                <span className="font-medium text-slate-600 dark:text-slate-300">Full name</span>
+                <input
+                  value={newAdmin.fullName}
+                  onChange={(e) => setNewAdmin((p) => ({ ...p, fullName: e.target.value }))}
+                  className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-slate-700 outline-none placeholder:text-slate-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+                  placeholder="Enter full name"
+                  required
+                />
+              </label>
+
+              <label className="flex flex-col gap-2 text-sm">
+                <span className="font-medium text-slate-600 dark:text-slate-300">Email</span>
+                <input
+                  type="email"
+                  value={newAdmin.email}
+                  onChange={(e) => setNewAdmin((p) => ({ ...p, email: e.target.value }))}
+                  className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-slate-700 outline-none placeholder:text-slate-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+                  placeholder="admin@example.com"
+                  required
+                />
+              </label>
+
+              <label className="flex flex-col gap-2 text-sm">
+                <span className="font-medium text-slate-600 dark:text-slate-300">Password</span>
+                <input
+                  type="password"
+                  value={newAdmin.password}
+                  onChange={(e) => setNewAdmin((p) => ({ ...p, password: e.target.value }))}
+                  className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-slate-700 outline-none placeholder:text-slate-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+                  placeholder="strong password"
+                  minLength={12}
+                  required
+                />
+              </label>
+
+              <label className="flex flex-col gap-2 text-sm">
+                <span className="font-medium text-slate-600 dark:text-slate-300">Confirm Password</span>
+                <input
+                  type="password"
+                  value={newAdmin.confirm}
+                  onChange={(e) => setNewAdmin((p) => ({ ...p, confirm: e.target.value }))}
+                  className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-slate-700 outline-none placeholder:text-slate-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+                  placeholder="confirm password"
+                  minLength={12}
+                  required
+                />
+              </label>
+
+              <label className="flex flex-col gap-2 text-sm">
+                <span className="font-medium text-slate-600 dark:text-slate-300">Location</span>
+                <input
+                  value={newAdmin.location}
+                  onChange={(e) => setNewAdmin((p) => ({ ...p, location: e.target.value }))}
+                  className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-slate-700 outline-none placeholder:text-slate-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+                  placeholder="City, Country"
+                />
+              </label>
+            </div>
+
+            <div className="flex flex-wrap justify-end gap-3 text-sm">
+              <button
+                type="button"
+                onClick={() => setNewAdmin({ email: '', fullName: '', password: '', confirm: '', location: '' })}
+                className="rounded-lg border border-slate-200 px-4 py-2 font-medium text-slate-600 transition hover:border-indigo-200 hover:text-indigo-600 dark:border-slate-700 dark:text-slate-300 dark:hover:border-indigo-500/60"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="rounded-lg border border-transparent bg-indigo-600 px-4 py-2 font-medium text-white shadow-sm transition hover:bg-indigo-500"
+              >
+                Create Admin
               </button>
             </div>
           </form>

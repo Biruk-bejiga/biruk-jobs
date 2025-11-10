@@ -292,3 +292,12 @@ export async function updateEmployeeProfile(userId, updates) {
 
   return getEmployeeProfile(userId);
 }
+
+export async function updateUserPassword(userId, passwordHash) {
+  const db = getDb();
+  await db
+    .update(users)
+    .set({ passwordHash, updatedAt: new Date() })
+    .where(eq(users.id, userId));
+  return true;
+}

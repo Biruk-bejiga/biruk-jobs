@@ -8,7 +8,9 @@ import {
   listUsers,
   setUserActiveStatus,
   updateUserProfile,
+  updateUserPassword,
 } from '../services/userService.js';
+import { hashPassword, verifyPassword } from '../lib/password.js';
 
 const router = Router();
 
@@ -98,6 +100,34 @@ router.patch('/users/:userId/status', async (req, res, next) => {
     }
 
     await setUserActiveStatus(userId, payload.isActive);
+
+    res.status(204).end();
+  } catch (err) {
+    next(err);
+  }
+});
+
+// change current admin's password
+router.post('/profile/password', async (req, res, next) => {
+  try {
+    const schema = z.object({
+      currentPassword: z.string().min(1),
+      newPassword: z.string().min(12),
+    });
+    const payload = schema.parse(req.body);
+
+    const user = await getUserById(req.user.id);
+    if (!user) {
+      throw createHttpError(404, 'User not found');
+    }
+
+    const ok = await verifyPassword(payload.currentPassword, user.passwordHash);
+    if (!ok) {
+      throw createHttpError(401, 'Current password incorrect');
+    }
+
+    const newHash = await hashPassword(payload.newPassword);
+    await updateUserPassword(req.user.id, newHash);
 
     res.status(204).end();
   } catch (err) {

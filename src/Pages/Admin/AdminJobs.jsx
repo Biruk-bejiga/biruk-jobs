@@ -1,78 +1,9 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useAuth } from '../../context/AuthContext';
 import { FiFilter, FiSearch, FiEye, FiFileText } from 'react-icons/fi';
+import { toast } from 'react-toastify';
 
-const jobRecords = [
-  {
-    id: 'job-420',
-    title: 'SaaS Dashboard Redesign',
-    employer: 'LaunchPad Labs',
-    category: 'UI/UX Design',
-    budgetType: 'Fixed',
-    posted: 'Oct 22, 2024',
-    status: 'Pending',
-    proposals: 18,
-    budgetRange: '$4k - $6k',
-    attachments: ['CreativeBrief.pdf'],
-    description:
-      'Seeking a senior product designer to modernize our analytics dashboard. Deliverables include a responsive component system in Figma and developer-ready specifications.',
-  },
-  {
-    id: 'job-421',
-    title: 'Marketing Automation Specialist',
-    employer: 'Bright Media',
-    category: 'Digital Marketing',
-    budgetType: 'Hourly',
-    posted: 'Oct 20, 2024',
-    status: 'Approved',
-    proposals: 37,
-    budgetRange: '$55/hr',
-    attachments: [],
-    description:
-      'Ongoing engagement to optimize HubSpot workflows, lead scoring, and lifecycle email nurture programs. Weekly reporting expected.',
-  },
-  {
-    id: 'job-422',
-    title: 'Kotlin Android Engineer',
-    employer: 'Orbit Finance',
-    category: 'Mobile Development',
-    budgetType: 'Hourly',
-    posted: 'Oct 19, 2024',
-    status: 'Active',
-    proposals: 22,
-    budgetRange: '$70/hr',
-    attachments: ['TechSpec.docx', 'Wireframes.fig'],
-    description:
-      'Build new features for our consumer investing app. Experience with biometric authentication and Jetpack Compose required.',
-  },
-  {
-    id: 'job-423',
-    title: 'B2B Content Strategist',
-    employer: 'Northbound',
-    category: 'Copywriting',
-    budgetType: 'Fixed',
-    posted: 'Oct 17, 2024',
-    status: 'Rejected',
-    proposals: 11,
-    budgetRange: '$2k - $3k',
-    attachments: [],
-    description:
-      'Looking for expert-level writer with fintech background to produce long-form case studies and gated assets. Pitch timeline and distribution plan.',
-  },
-  {
-    id: 'job-424',
-    title: 'Salesforce Integration Lead',
-    employer: 'Atlas Ops',
-    category: 'CRM & ERP',
-    budgetType: 'Fixed',
-    posted: 'Oct 15, 2024',
-    status: 'Closed',
-    proposals: 45,
-    budgetRange: '$18k',
-    attachments: ['Requirements.pdf'],
-    description:
-      'Enterprise-grade rollout connecting Salesforce with NetSuite. Requires security review and compliance documentation in final delivery.',
-  },
-];
+// jobs are fetched from API for admin listing
 
 const statusBadge = {
   Pending: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
@@ -83,19 +14,77 @@ const statusBadge = {
 };
 
 const AdminJobs = () => {
+  const { authFetchJson } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const [selectedJob, setSelectedJob] = useState(null);
+  const [jobs, setJobs] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [actionLoading, setActionLoading] = useState(null);
+
+  const loadJobs = async () => {
+    setLoading(true);
+    try {
+      const body = await authFetchJson('/api/jobs');
+      const list = body?.data ?? [];
+      setJobs(list);
+    } catch (err) {
+      console.error('Failed to load admin jobs', err);
+      setJobs([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadJobs();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const filteredJobs = useMemo(() => {
-    return jobRecords.filter((job) => {
-      const matchesSearch = `${job.title} ${job.employer}`
+    return jobs.filter((job) => {
+      const matchesSearch = `${job.title} ${job.employer ?? job.companyName ?? ''}`
         .toLowerCase()
         .includes(searchTerm.toLowerCase().trim());
-      const matchesStatus = statusFilter === 'All' || job.status === statusFilter;
-      return matchesSearch && matchesStatus;
+      if (statusFilter === 'All') return matchesSearch;
+      // map backend statuses to UI-friendly text
+      const mapped = job.status === 'published' ? 'Approved' : job.status === 'draft' ? 'Pending' : 'Closed';
+      return matchesSearch && mapped === statusFilter;
     });
-  }, [searchTerm, statusFilter]);
+  }, [jobs, searchTerm, statusFilter]);
+
+  const refresh = () => loadJobs();
+
+  const setJobStatus = async (jobId, status) => {
+    setActionLoading(jobId);
+    try {
+      await authFetchJson(`/api/jobs/${jobId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status }),
+      });
+      await loadJobs();
+    } catch (err) {
+      console.error('Failed to update job status', err);
+      alert(err.message ?? 'Failed to update job');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleDelete = async (jobId) => {
+    if (!confirm('Delete this job? This action cannot be undone.')) return;
+    setActionLoading(jobId);
+    try {
+      await authFetchJson(`/api/jobs/${jobId}`, { method: 'DELETE' });
+      await loadJobs();
+    } catch (err) {
+      console.error('Failed to delete job', err);
+      alert(err.message ?? 'Failed to delete job');
+    } finally {
+      setActionLoading(null);
+    }
+  };
 
   return (
     <div className="space-y-8">
@@ -163,17 +152,17 @@ const AdminJobs = () => {
                     <div className="font-medium text-slate-900 dark:text-white">{job.title}</div>
                     <p className="text-xs text-slate-500 dark:text-slate-400">{job.id}</p>
                   </td>
-                  <td className="px-4 py-3 text-slate-600 dark:text-slate-300">{job.employer}</td>
-                  <td className="px-4 py-3 text-slate-600 dark:text-slate-300">{job.category}</td>
-                  <td className="px-4 py-3 text-slate-600 dark:text-slate-300">{job.budgetType}</td>
-                  <td className="px-4 py-3 text-slate-600 dark:text-slate-300">{job.posted}</td>
+                  <td className="px-4 py-3 text-slate-600 dark:text-slate-300">{job.employerName ?? job.employer ?? job.companyName ?? ''}</td>
+                  <td className="px-4 py-3 text-slate-600 dark:text-slate-300">{job.category ?? job.employmentType}</td>
+                  <td className="px-4 py-3 text-slate-600 dark:text-slate-300">{job.budgetType ?? (job.salaryMin || job.salaryMax ? 'Range' : '')}</td>
+                  <td className="px-4 py-3 text-slate-600 dark:text-slate-300">{job.createdAt ? new Date(job.createdAt).toLocaleDateString() : ''}</td>
                   <td className="px-4 py-3">
                     <span
                       className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${
-                        statusBadge[job.status] || statusBadge.Pending
+                        statusBadge[(job.status === 'published' ? 'Approved' : job.status === 'draft' ? 'Pending' : 'Closed')] || statusBadge.Pending
                       }`}
                     >
-                      {job.status}
+                      {job.status === 'published' ? 'Approved' : job.status === 'draft' ? 'Pending' : 'Closed'}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-right">
@@ -188,21 +177,27 @@ const AdminJobs = () => {
                       </button>
                       <button
                         type="button"
-                        className="rounded-lg border border-transparent bg-emerald-500/10 px-3 py-1.5 text-xs font-medium text-emerald-600 transition hover:bg-emerald-500/20 dark:text-emerald-400"
+                        disabled={actionLoading === job.id}
+                        onClick={() => setJobStatus(job.id, 'published')}
+                        className="rounded-lg border border-transparent bg-emerald-500/10 px-3 py-1.5 text-xs font-medium text-emerald-600 transition hover:bg-emerald-500/20 dark:text-emerald-400 disabled:opacity-50"
                       >
-                        Approve
+                        {actionLoading === job.id && job.status !== 'published' ? '…' : 'Approve'}
                       </button>
                       <button
                         type="button"
-                        className="rounded-lg border border-transparent bg-rose-500/10 px-3 py-1.5 text-xs font-medium text-rose-600 transition hover:bg-rose-500/20 dark:text-rose-400"
+                        disabled={actionLoading === job.id}
+                        onClick={() => setJobStatus(job.id, 'closed')}
+                        className="rounded-lg border border-transparent bg-rose-500/10 px-3 py-1.5 text-xs font-medium text-rose-600 transition hover:bg-rose-500/20 dark:text-rose-400 disabled:opacity-50"
                       >
-                        Reject
+                        {actionLoading === job.id && job.status !== 'closed' ? '…' : 'Reject'}
                       </button>
                       <button
                         type="button"
-                        className="rounded-lg border border-transparent bg-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 transition hover:bg-slate-300 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+                        disabled={actionLoading === job.id}
+                        onClick={() => handleDelete(job.id)}
+                        className="rounded-lg border border-transparent bg-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 transition hover:bg-slate-300 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 disabled:opacity-50"
                       >
-                        Delete
+                        {actionLoading === job.id ? '…' : 'Delete'}
                       </button>
                     </div>
                   </td>
@@ -228,9 +223,9 @@ const AdminJobs = () => {
           <div className="w-full max-w-3xl rounded-2xl border border-slate-200 bg-white p-6 shadow-xl dark:border-slate-700 dark:bg-slate-900">
             <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
               <div>
-                <h3 className="text-lg font-semibold text-slate-900 dark:text-white">{selectedJob.title}</h3>
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-white">{selectedJob.title ?? ''}</h3>
                 <p className="text-sm text-slate-500 dark:text-slate-400">
-                  {selectedJob.employer} · {selectedJob.category}
+                  {selectedJob.employer ?? selectedJob.employerName ?? selectedJob.companyName ?? ''} · {selectedJob.category ?? selectedJob.employmentType ?? ''}
                 </p>
               </div>
               <button
@@ -245,26 +240,26 @@ const AdminJobs = () => {
             <div className="mt-6 grid gap-4 md:grid-cols-2">
               <div className="rounded-xl border border-slate-100 bg-slate-50 p-4 text-sm dark:border-slate-800 dark:bg-slate-800/60">
                 <p className="text-xs uppercase tracking-wide text-slate-400">Budget Type</p>
-                <p className="mt-2 font-medium text-slate-900 dark:text-white">{selectedJob.budgetType}</p>
-                <p className="text-xs text-slate-500 dark:text-slate-400">{selectedJob.budgetRange}</p>
+                <p className="mt-2 font-medium text-slate-900 dark:text-white">{selectedJob.budgetType ?? (selectedJob.salaryMin || selectedJob.salaryMax ? 'Range' : '')}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">{selectedJob.budgetRange ?? (selectedJob.salaryMin || selectedJob.salaryMax ? `${selectedJob.salaryMin ?? ''} - ${selectedJob.salaryMax ?? ''}` : '')}</p>
               </div>
               <div className="rounded-xl border border-slate-100 bg-slate-50 p-4 text-sm dark:border-slate-800 dark:bg-slate-800/60">
                 <p className="text-xs uppercase tracking-wide text-slate-400">Proposals</p>
-                <p className="mt-2 font-medium text-slate-900 dark:text-white">{selectedJob.proposals}</p>
+                <p className="mt-2 font-medium text-slate-900 dark:text-white">{selectedJob.proposals ?? 0}</p>
                 <p className="text-xs text-slate-500 dark:text-slate-400">Active submissions awaiting review</p>
               </div>
               <div className="rounded-xl border border-slate-100 bg-slate-50 p-4 text-sm dark:border-slate-800 dark:bg-slate-800/60">
                 <p className="text-xs uppercase tracking-wide text-slate-400">Date Posted</p>
-                <p className="mt-2 font-medium text-slate-900 dark:text-white">{selectedJob.posted}</p>
+                <p className="mt-2 font-medium text-slate-900 dark:text-white">{selectedJob.posted ?? (selectedJob.createdAt ? new Date(selectedJob.createdAt).toLocaleDateString() : '')}</p>
               </div>
               <div className="rounded-xl border border-slate-100 bg-slate-50 p-4 text-sm dark:border-slate-800 dark:bg-slate-800/60">
                 <p className="text-xs uppercase tracking-wide text-slate-400">Status</p>
                 <span
                   className={`mt-2 inline-flex w-fit rounded-full px-3 py-1 text-xs font-medium ${
-                    statusBadge[selectedJob.status] || statusBadge.Pending
+                    statusBadge[(selectedJob.status === 'published' ? 'Approved' : selectedJob.status === 'draft' ? 'Pending' : 'Closed')] || statusBadge.Pending
                   }`}
                 >
-                  {selectedJob.status}
+                  {selectedJob.status === 'published' ? 'Approved' : selectedJob.status === 'draft' ? 'Pending' : (selectedJob.status ?? '')}
                 </span>
               </div>
             </div>
@@ -274,11 +269,11 @@ const AdminJobs = () => {
               <p className="leading-relaxed text-slate-600 dark:text-slate-300">{selectedJob.description}</p>
             </div>
 
-            {selectedJob.attachments.length > 0 && (
+            {(selectedJob.attachments?.length ?? 0) > 0 && (
               <div className="mt-6">
                 <p className="text-xs uppercase tracking-wide text-slate-400">Attachments</p>
                 <div className="mt-3 flex flex-wrap gap-2">
-                  {selectedJob.attachments.map((fileName) => (
+                  {(selectedJob.attachments || []).map((fileName) => (
                     <span
                       key={fileName}
                       className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
@@ -294,15 +289,35 @@ const AdminJobs = () => {
             <div className="mt-6 flex flex-wrap justify-end gap-3 text-sm">
               <button
                 type="button"
-                className="rounded-lg border border-slate-200 px-4 py-2 font-medium text-slate-600 transition hover:border-indigo-200 hover:text-indigo-600 dark:border-slate-700 dark:text-slate-300 dark:hover:border-indigo-500/60"
+                disabled={actionLoading === selectedJob?.id}
+                onClick={async () => {
+                  try {
+                    await setJobStatus(selectedJob.id, 'draft');
+                    setSelectedJob(null);
+                    toast.info('Requested edits — job set to draft');
+                  } catch (err) {
+                    toast.error(err?.message ?? 'Failed to request edits');
+                  }
+                }}
+                className="rounded-lg border border-slate-200 px-4 py-2 font-medium text-slate-600 transition hover:border-indigo-200 hover:text-indigo-600 dark:border-slate-700 dark:text-slate-300 dark:hover:border-indigo-500/60 disabled:opacity-50"
               >
-                Request edits
+                {actionLoading === selectedJob?.id ? '…' : 'Request edits'}
               </button>
               <button
                 type="button"
-                className="rounded-lg border border-transparent bg-emerald-500 px-4 py-2 font-medium text-white shadow-sm transition hover:bg-emerald-500/90"
+                disabled={actionLoading === selectedJob?.id}
+                onClick={async () => {
+                  try {
+                    await setJobStatus(selectedJob.id, 'published');
+                    setSelectedJob(null);
+                    toast.success('Job approved');
+                  } catch (err) {
+                    toast.error(err?.message ?? 'Failed to approve job');
+                  }
+                }}
+                className="rounded-lg border border-transparent bg-emerald-500 px-4 py-2 font-medium text-white shadow-sm transition hover:bg-emerald-500/90 disabled:opacity-50"
               >
-                Mark as approved
+                {actionLoading === selectedJob?.id ? '…' : 'Mark as approved'}
               </button>
             </div>
           </div>

@@ -1,7 +1,15 @@
 import PropTypes from 'prop-types';
 import { FiMenu, FiBell, FiMoon, FiSun } from 'react-icons/fi';
 
-const AdminTopbar = ({ onToggleSidebar, onToggleTheme, isDarkMode }) => {
+const AdminTopbar = ({ onToggleSidebar, onToggleTheme, isDarkMode, user }) => {
+  const displayName = user?.fullName ?? 'Alex Bennett';
+  const initials = (displayName || 'A')
+    .split(' ')
+    .filter(Boolean)
+    .map((s) => s[0]?.toUpperCase())
+    .slice(0, 2)
+    .join('');
+
   return (
     <header className="sticky top-0 z-30 flex items-center justify-between border-b border-slate-200 bg-white/80 px-4 py-4 backdrop-blur dark:border-slate-800 dark:bg-slate-900/80 lg:px-8">
       <div className="flex items-center gap-3">
@@ -42,11 +50,11 @@ const AdminTopbar = ({ onToggleSidebar, onToggleTheme, isDarkMode }) => {
 
         <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-1.5 shadow-sm dark:border-slate-700 dark:bg-slate-900">
           <div className="flex h-9 w-9 items-center justify-center rounded-full bg-indigo-500 text-sm font-semibold text-white">
-            AB
+            {initials}
           </div>
           <div className="hidden text-left text-sm leading-tight sm:block">
-            <p className="font-semibold text-slate-900 dark:text-white">Alex Bennett</p>
-            <p className="text-slate-500 dark:text-slate-400">Platform Admin</p>
+            <p className="font-semibold text-slate-900 dark:text-white">{displayName}</p>
+            <p className="text-slate-500 dark:text-slate-400">{user?.role ? `${user.role.charAt(0).toUpperCase() + user.role.slice(1)} Admin` : 'Platform Admin'}</p>
           </div>
         </div>
       </div>

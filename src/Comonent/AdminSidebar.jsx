@@ -64,6 +64,7 @@ const AdminSidebar = ({ isOpen, onNavigate }) => {
               key={item.to}
               to={item.to}
               onClick={onNavigate}
+              end={item.to === '/admin'}
               className={({ isActive }) =>
                 `group flex items-center rounded-lg px-4 py-3 text-sm font-medium transition-colors duration-150 ${
                   isActive

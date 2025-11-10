@@ -1,63 +1,9 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { FiFilter, FiSearch, FiMoreHorizontal } from 'react-icons/fi';
+import { useAuth } from '../../context/AuthContext';
+import { toast } from 'react-toastify';
 
-const userData = [
-  {
-    id: 'u-1024',
-    name: 'Evelyn Stone',
-    email: 'evelyn.stone@example.com',
-    type: 'Freelancer',
-    joined: 'Mar 12, 2024',
-    status: 'Active',
-    skills: ['UI/UX', 'Design Systems', 'Figma'],
-    location: 'Berlin, Germany',
-    earnings: '$58,400',
-  },
-  {
-    id: 'u-1031',
-    name: 'Marcus Lee',
-    email: 'marcus.lee@example.com',
-    type: 'Employer',
-    joined: 'Apr 3, 2024',
-    status: 'Inactive',
-    skills: ['Team Lead'],
-    location: 'Austin, USA',
-    earnings: '$0',
-  },
-  {
-    id: 'u-1035',
-    name: 'Priya Sharma',
-    email: 'priya.sharma@example.com',
-    type: 'Freelancer',
-    joined: 'May 19, 2024',
-    status: 'Active',
-    skills: ['Full-stack', 'React', 'Node.js'],
-    location: 'Bangalore, India',
-    earnings: '$74,120',
-  },
-  {
-    id: 'u-1040',
-    name: 'Studio Eleven',
-    email: 'contact@studioeleven.com',
-    type: 'Employer',
-    joined: 'Feb 8, 2024',
-    status: 'Active',
-    skills: ['Agency'],
-    location: 'Toronto, Canada',
-    earnings: '$310,820',
-  },
-  {
-    id: 'u-1049',
-    name: 'Maria Sanchez',
-    email: 'maria.sanchez@example.com',
-    type: 'Freelancer',
-    joined: 'Jun 4, 2024',
-    status: 'Pending',
-    skills: ['Project Management'],
-    location: 'Madrid, Spain',
-    earnings: '$12,200',
-  },
-];
+// NOTE: this page previously used a static `userData` array. It's now fetched from the API.
 
 const statusStyles = {
   Active: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
@@ -70,9 +16,45 @@ const AdminUsers = () => {
   const [typeFilter, setTypeFilter] = useState('All');
   const [statusFilter, setStatusFilter] = useState('All');
   const [selectedUser, setSelectedUser] = useState(null);
+  const { authFetchJson } = useAuth();
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [actionLoading, setActionLoading] = useState(null);
+
+  const loadUsers = async () => {
+    setLoading(true);
+    try {
+      const body = await authFetchJson('/api/admin/users');
+      const list = body?.data ?? [];
+      // map server user shape to UI-friendly shape
+      const mapped = list.map((u) => ({
+        id: u.id,
+        name: u.fullName ?? u.full_name ?? u.email,
+        email: u.email,
+        type: u.role === 'employer' ? 'Employer' : u.role === 'employee' ? 'Freelancer' : 'Admin',
+        joined: u.createdAt ? new Date(u.createdAt).toLocaleDateString() : '',
+        status: u.isActive ? 'Active' : 'Inactive',
+        raw: u,
+        skills: u.skills ?? [],
+        earnings: u.earnings ?? null,
+      }));
+      setUsers(mapped);
+    } catch (err) {
+      console.error('Failed to load admin users', err);
+      setUsers([]);
+      toast.error(err?.message ?? 'Failed to load users');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadUsers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const filteredUsers = useMemo(() => {
-    return userData.filter((user) => {
+    return users.filter((user) => {
       const matchesSearch = `${user.name} ${user.email}`
         .toLowerCase()
         .includes(searchTerm.toLowerCase().trim());
@@ -80,12 +62,45 @@ const AdminUsers = () => {
       const matchesStatus = statusFilter === 'All' || user.status === statusFilter;
       return matchesSearch && matchesType && matchesStatus;
     });
-  }, [searchTerm, statusFilter, typeFilter]);
+  }, [users, searchTerm, statusFilter, typeFilter]);
 
   const handleResetFilters = () => {
     setSearchTerm('');
     setTypeFilter('All');
     setStatusFilter('All');
+  };
+
+  const setUserActive = async (userId, isActive) => {
+    setActionLoading(userId);
+    try {
+      await authFetchJson(`/api/admin/users/${userId}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isActive }),
+      });
+      toast.success(isActive ? 'User activated' : 'User deactivated');
+      await loadUsers();
+    } catch (err) {
+      console.error('Failed to set user active status', err);
+      toast.error(err?.message ?? 'Failed to update user');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleDeleteUser = async (userId) => {
+    if (!confirm('Delete this user? This action cannot be undone.')) return;
+    setActionLoading(userId);
+    try {
+      await authFetchJson(`/api/admin/users/${userId}`, { method: 'DELETE' });
+      toast.success('User deleted');
+      await loadUsers();
+    } catch (err) {
+      console.error('Failed to delete user', err);
+      toast.error(err?.message ?? 'Failed to delete user');
+    } finally {
+      setActionLoading(null);
+    }
   };
 
   return (
@@ -194,21 +209,27 @@ const AdminUsers = () => {
                       </button>
                       <button
                         type="button"
-                        className="rounded-lg border border-transparent bg-emerald-500/10 px-3 py-1.5 text-xs font-medium text-emerald-600 transition hover:bg-emerald-500/20 dark:text-emerald-400"
+                        disabled={actionLoading === user.id}
+                        onClick={() => setUserActive(user.id, true)}
+                        className="rounded-lg border border-transparent bg-emerald-500/10 px-3 py-1.5 text-xs font-medium text-emerald-600 transition hover:bg-emerald-500/20 dark:text-emerald-400 disabled:opacity-50"
                       >
-                        Approve
+                        {actionLoading === user.id ? '…' : 'Approve'}
                       </button>
                       <button
                         type="button"
-                        className="rounded-lg border border-transparent bg-amber-500/10 px-3 py-1.5 text-xs font-medium text-amber-600 transition hover:bg-amber-500/20 dark:text-amber-400"
+                        disabled={actionLoading === user.id}
+                        onClick={() => setUserActive(user.id, false)}
+                        className="rounded-lg border border-transparent bg-amber-500/10 px-3 py-1.5 text-xs font-medium text-amber-600 transition hover:bg-amber-500/20 dark:text-amber-400 disabled:opacity-50"
                       >
-                        Deactivate
+                        {actionLoading === user.id ? '…' : 'Deactivate'}
                       </button>
                       <button
                         type="button"
-                        className="rounded-lg border border-transparent bg-rose-500/10 px-3 py-1.5 text-xs font-medium text-rose-600 transition hover:bg-rose-500/20 dark:text-rose-400"
+                        disabled={actionLoading === user.id}
+                        onClick={() => handleDeleteUser(user.id)}
+                        className="rounded-lg border border-transparent bg-rose-500/10 px-3 py-1.5 text-xs font-medium text-rose-600 transition hover:bg-rose-500/20 dark:text-rose-400 disabled:opacity-50"
                       >
-                        Delete
+                        {actionLoading === user.id ? '…' : 'Delete'}
                       </button>
                       <button
                         type="button"
@@ -256,26 +277,26 @@ const AdminUsers = () => {
             <div className="mt-6 grid gap-4 md:grid-cols-2">
               <div className="rounded-xl border border-slate-100 bg-slate-50 p-4 text-sm dark:border-slate-800 dark:bg-slate-800/60">
                 <p className="text-xs uppercase tracking-wide text-slate-400">Account Type</p>
-                <p className="mt-2 font-medium text-slate-900 dark:text-white">{selectedUser.type}</p>
+                <p className="mt-2 font-medium text-slate-900 dark:text-white">{selectedUser?.type ?? selectedUser?.raw?.role ?? ''}</p>
               </div>
               <div className="rounded-xl border border-slate-100 bg-slate-50 p-4 text-sm dark:border-slate-800 dark:bg-slate-800/60">
                 <p className="text-xs uppercase tracking-wide text-slate-400">Status</p>
-                <p className="mt-2 font-medium text-slate-900 dark:text-white">{selectedUser.status}</p>
+                <p className="mt-2 font-medium text-slate-900 dark:text-white">{selectedUser?.status ?? (selectedUser?.raw?.isActive ? 'Active' : 'Inactive')}</p>
               </div>
               <div className="rounded-xl border border-slate-100 bg-slate-50 p-4 text-sm dark:border-slate-800 dark:bg-slate-800/60">
                 <p className="text-xs uppercase tracking-wide text-slate-400">Joined</p>
-                <p className="mt-2 font-medium text-slate-900 dark:text-white">{selectedUser.joined}</p>
+                <p className="mt-2 font-medium text-slate-900 dark:text-white">{selectedUser?.joined ?? (selectedUser?.raw?.createdAt ? new Date(selectedUser.raw.createdAt).toLocaleDateString() : '')}</p>
               </div>
               <div className="rounded-xl border border-slate-100 bg-slate-50 p-4 text-sm dark:border-slate-800 dark:bg-slate-800/60">
                 <p className="text-xs uppercase tracking-wide text-slate-400">Lifetime Earnings</p>
-                <p className="mt-2 font-medium text-slate-900 dark:text-white">{selectedUser.earnings}</p>
+                <p className="mt-2 font-medium text-slate-900 dark:text-white">{selectedUser?.earnings ?? '—'}</p>
               </div>
             </div>
 
             <div className="mt-6">
               <p className="text-xs uppercase tracking-wide text-slate-400">Skills & Tags</p>
               <div className="mt-2 flex flex-wrap gap-2">
-                {selectedUser.skills.map((skill) => (
+                {(selectedUser?.skills || []).map((skill) => (
                   <span
                     key={skill}
                     className="inline-flex items-center rounded-full bg-indigo-500/10 px-3 py-1 text-xs font-medium text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-300"
