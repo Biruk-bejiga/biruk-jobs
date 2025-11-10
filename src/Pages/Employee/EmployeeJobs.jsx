@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Link } from 'react-router-dom';
 import { FiBookmark, FiBriefcase, FiMapPin, FiSearch, FiSliders } from 'react-icons/fi';
 import Spinner from '../../Comonent/Spinner';
 import { useAuth } from '../../context/AuthContext';
@@ -15,7 +16,7 @@ const employmentTypes = [
 ];
 
 const EmployeeJobs = () => {
-  const { authFetchJson } = useAuth();
+  const { authFetchJson, user } = useAuth();
   const [search, setSearch] = useState('');
   const [location, setLocation] = useState('');
   const [employmentType, setEmploymentType] = useState('');
@@ -35,6 +36,7 @@ const EmployeeJobs = () => {
   });
 
   const jobs = Array.isArray(query.data) ? query.data : [];
+  const queryClient = useQueryClient();
 
   const handleFavorite = async (jobId) => {
     try {
@@ -47,6 +49,29 @@ const EmployeeJobs = () => {
     } catch (err) {
       toast.error(err.message);
     }
+  };
+
+  const applyMutation = useMutation({
+    mutationFn: async (jobId) => {
+      const response = await authFetchJson(`/api/jobs/${jobId}/apply`, { method: 'POST' }, 'Unable to apply');
+      return response?.data ?? null;
+    },
+    onSuccess: () => {
+      toast.success('Application submitted');
+      queryClient.invalidateQueries({ queryKey: ['employee', 'applications'] });
+      queryClient.invalidateQueries({ queryKey: ['jobs'] });
+    },
+    onError: (err) => {
+      toast.error(err?.message ?? 'Unable to submit application');
+    },
+  });
+
+  const handleApply = (jobId) => {
+    if (!user) {
+      toast.info('Please sign in to apply');
+      return;
+    }
+    applyMutation.mutate(jobId);
   };
 
   return (
@@ -149,17 +174,31 @@ const EmployeeJobs = () => {
             <article key={job.id} className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
               <div className="flex items-start justify-between">
                 <div>
-                  <h3 className="text-lg font-semibold text-slate-900">{job.title}</h3>
+                  <h3 className="text-lg font-semibold text-slate-900">
+                    <Link to={`/jobs/${job.id}`} className="hover:underline">{job.title}</Link>
+                  </h3>
                   <p className="mt-1 text-sm text-slate-500">{job.location}</p>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => handleFavorite(job.id)}
-                  className="inline-flex items-center gap-1 rounded-full border border-slate-200 px-3 py-1 text-xs font-medium text-slate-600 hover:border-indigo-200 hover:text-indigo-600"
-                >
-                  <FiBookmark />
-                  Save
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleFavorite(job.id)}
+                    className="inline-flex items-center gap-1 rounded-full border border-slate-200 px-3 py-1 text-xs font-medium text-slate-600 hover:border-indigo-200 hover:text-indigo-600"
+                  >
+                    <FiBookmark />
+                    Save
+                  </button>
+                  {user?.role === 'employee' && job.status === 'published' ? (
+                    <button
+                      type="button"
+                      onClick={() => handleApply(job.id)}
+                      disabled={applyMutation.isLoading}
+                      className="inline-flex items-center gap-1 rounded-full bg-indigo-600 px-3 py-1 text-xs font-medium text-white hover:bg-indigo-500"
+                    >
+                      Apply
+                    </button>
+                  ) : null}
+                </div>
               </div>
               <p className="mt-3 text-sm text-slate-600 line-clamp-3">{job.summary ?? job.description}</p>
               <div className="mt-4 flex flex-wrap items-center gap-2 text-xs text-slate-500">
