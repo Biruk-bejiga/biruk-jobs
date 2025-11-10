@@ -85,17 +85,17 @@ const AdminProfile = () => {
         });
         if (!res.ok) {
           const text = await res.text();
-          alert('Failed to save profile: ' + text);
+          toast.error('Failed to save profile: ' + text);
           return;
         }
         const saved = await res.json();
         setProfile(saved);
         setPendingProfile(saved);
-        alert('Profile saved');
+        toast.success('Profile saved');
       } catch (err) {
         // fallback to local update
         setProfile({ ...pendingProfile });
-        alert('Saved locally (server unavailable)');
+        toast.info('Saved locally (server unavailable)');
       }
     })();
   };

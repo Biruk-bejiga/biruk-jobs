@@ -71,10 +71,10 @@ const Navbar = () => {
                     className="rounded-md px-3 py-2 text-sm font-medium text-white transition hover:bg-gray-900"
                   >Sign out</button>
                 ) : (
-                  <NavLink
-                    to="/login"
-                    className={linkClass} >Sign In
-                    </NavLink>
+                  <>
+                    <NavLink to="/login" className={linkClass}>Sign In</NavLink>
+                    <NavLink to="/register" className={linkClass}>Sign up</NavLink>
+                  </>
                 )}
               </div>
             </div>

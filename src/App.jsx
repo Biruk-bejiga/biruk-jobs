@@ -1,6 +1,7 @@
 import { useCallback, useMemo } from 'react'
 import { Route, createBrowserRouter, createRoutesFromElements, RouterProvider } from 'react-router-dom'
 import { ToastContainer } from 'react-toastify'
+import { ConfirmProvider } from './Comonent/ConfirmProvider'
 import HomePage from './Pages/HomePage'
 import MainLayout from './layouts/MainLayout'
 import JobsPage from './Pages/JobsPage'
@@ -32,6 +33,7 @@ import ProtectedRoute from './Comonent/ProtectedRoute'
 import LoginPage from './Pages/LoginPage'
 import RegisterEmployee from './Pages/RegisterEmployee'
 import RegisterEmployer from './Pages/RegisterEmployer'
+import Register from './Pages/Register'
 import { useAuth } from './context/AuthContext'
 
 const parseErrorMessage = async (response, fallbackMessage) => {
@@ -73,6 +75,7 @@ const App = () => {
               <Route path='/jobs' element={<JobsPage />} />
               <Route path='/jobs/:id' element={<JobPage deleteJob={deleteJob} />} loader={jobLoader} />
               <Route path='/login' element={<LoginPage />} />
+                <Route path='/register' element={<Register />} />
                 <Route path='/register/employee' element={<RegisterEmployee />} />
                 <Route path='/register/employer' element={<RegisterEmployer />} />
               <Route path='*' element={<NotFoundPage />} />
@@ -133,7 +136,9 @@ const App = () => {
 
   return (
     <>
-      <RouterProvider router={router} />
+      <ConfirmProvider>
+        <RouterProvider router={router} />
+      </ConfirmProvider>
       <ToastContainer position='top-center' autoClose={3000} newestOnTop />
     </>
   )

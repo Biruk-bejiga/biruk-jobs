@@ -9,6 +9,7 @@ import { z } from 'zod';
 import { toast } from 'react-toastify';
 import Spinner from '../Comonent/Spinner';
 import { useAuth } from '../context/AuthContext';
+import { useConfirm } from '../Comonent/ConfirmProvider';
 
 const formatEmploymentType = (value) => {
   if (!value) return 'Unknown type';
@@ -57,6 +58,7 @@ const JobPage = ({ deleteJob }) => {
   const jobId = job?.id;
   const [isDeleting, setIsDeleting] = useState(false);
   const { user, authFetchJson } = useAuth();
+  const confirm = useConfirm();
   const queryClient = useQueryClient();
   const isEmployee = user?.role === 'employee';
 
@@ -143,9 +145,13 @@ const JobPage = ({ deleteJob }) => {
   }, [job, user]);
 
   const onDeleteClick = async (jobId) => {
-    if (!window.confirm('Are you sure you want to delete this listing?')) {
-      return;
+    let ok = false;
+    try {
+      ok = await confirm({ title: 'Delete listing', description: 'Are you sure you want to delete this listing?', confirmText: 'Delete', cancelText: 'Cancel', destructive: true });
+    } catch (e) {
+      ok = false;
     }
+    if (!ok) return;
 
     try {
       setIsDeleting(true);

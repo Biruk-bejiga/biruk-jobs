@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { FiFilter, FiSearch, FiMoreHorizontal } from 'react-icons/fi';
 import { useAuth } from '../../context/AuthContext';
 import { toast } from 'react-toastify';
+import { useConfirm } from '../../Comonent/ConfirmProvider';
+import Spinner from '../../Comonent/Spinner';
 
 // NOTE: this page previously used a static `userData` array. It's now fetched from the API.
 
@@ -17,9 +19,12 @@ const AdminUsers = () => {
   const [statusFilter, setStatusFilter] = useState('All');
   const [selectedUser, setSelectedUser] = useState(null);
   const { authFetchJson } = useAuth();
+  const confirm = useConfirm();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState(null);
+
+  
 
   const loadUsers = async () => {
     setLoading(true);
@@ -89,7 +94,13 @@ const AdminUsers = () => {
   };
 
   const handleDeleteUser = async (userId) => {
-    if (!confirm('Delete this user? This action cannot be undone.')) return;
+    let ok = false;
+    try {
+      ok = await confirm({ title: 'Delete user', description: 'Delete this user? This action cannot be undone.', confirmText: 'Delete', cancelText: 'Cancel', destructive: true });
+    } catch (e) {
+      ok = false;
+    }
+    if (!ok) return;
     setActionLoading(userId);
     try {
       await authFetchJson(`/api/admin/users/${userId}`, { method: 'DELETE' });
@@ -105,6 +116,11 @@ const AdminUsers = () => {
 
   return (
     <div className="space-y-8">
+      {loading ? (
+        <div className="flex justify-center py-10">
+          <Spinner loading />
+        </div>
+      ) : null}
       <header className="flex flex-col items-start justify-between gap-6 lg:flex-row lg:items-center">
         <div>
           <h2 className="text-2xl font-semibold text-slate-900 dark:text-white">User Management</h2>

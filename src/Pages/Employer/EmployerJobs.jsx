@@ -5,6 +5,7 @@ import { FiEdit, FiPlus, FiTrash2 } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import Spinner from '../../Comonent/Spinner';
 import { useAuth } from '../../context/AuthContext';
+import { useConfirm } from '../../Comonent/ConfirmProvider';
 
 const statusLabels = {
   draft: { label: 'Draft', className: 'bg-slate-100 text-slate-600' },
@@ -16,6 +17,7 @@ const EmployerJobs = () => {
   const { authFetchJson } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const confirm = useConfirm();
   const [statusFilter, setStatusFilter] = useState('all');
 
   const { data, isLoading, isError, error } = useQuery({
@@ -46,9 +48,13 @@ const EmployerJobs = () => {
   });
 
   const handleDelete = async (jobId) => {
-    if (!window.confirm('Delete this job? Applicants will lose access.')) {
-      return;
+    let ok = false;
+    try {
+      ok = await confirm({ title: 'Delete job', description: 'Delete this job? Applicants will lose access.', confirmText: 'Delete', cancelText: 'Cancel', destructive: true });
+    } catch (e) {
+      ok = false;
     }
+    if (!ok) return;
     deleteMutation.mutate(jobId);
   };
 

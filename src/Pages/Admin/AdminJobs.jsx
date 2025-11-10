@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { FiFilter, FiSearch, FiEye, FiFileText } from 'react-icons/fi';
 import { toast } from 'react-toastify';
+import { useConfirm } from '../../Comonent/ConfirmProvider';
+import Spinner from '../../Comonent/Spinner';
 
 // jobs are fetched from API for admin listing
 
@@ -15,6 +17,7 @@ const statusBadge = {
 
 const AdminJobs = () => {
   const { authFetchJson } = useAuth();
+  const confirm = useConfirm();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const [selectedJob, setSelectedJob] = useState(null);
@@ -66,21 +69,27 @@ const AdminJobs = () => {
       await loadJobs();
     } catch (err) {
       console.error('Failed to update job status', err);
-      alert(err.message ?? 'Failed to update job');
+      toast.error(err.message ?? 'Failed to update job');
     } finally {
       setActionLoading(null);
     }
   };
 
   const handleDelete = async (jobId) => {
-    if (!confirm('Delete this job? This action cannot be undone.')) return;
+    let ok = false;
+    try {
+      ok = await confirm({ title: 'Delete job', description: 'Delete this job? This action cannot be undone.', confirmText: 'Delete', cancelText: 'Cancel', destructive: true });
+    } catch (e) {
+      ok = false;
+    }
+    if (!ok) return;
     setActionLoading(jobId);
     try {
       await authFetchJson(`/api/jobs/${jobId}`, { method: 'DELETE' });
       await loadJobs();
     } catch (err) {
       console.error('Failed to delete job', err);
-      alert(err.message ?? 'Failed to delete job');
+      toast.error(err.message ?? 'Failed to delete job');
     } finally {
       setActionLoading(null);
     }

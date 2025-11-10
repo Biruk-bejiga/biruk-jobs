@@ -1,13 +1,14 @@
 import { Outlet } from 'react-router-dom'
 import Navbar from '../Comonent/Navbar'
+import { ConfirmProvider } from '../Comonent/ConfirmProvider'
 
 
 const MainLayout = () => {
   return (
-    <>
-    <Navbar />
-    <Outlet />
-    </>
+    <ConfirmProvider>
+      <Navbar />
+      <Outlet />
+    </ConfirmProvider>
   )
 }
 

@@ -130,9 +130,7 @@ const LoginPage = () => {
 
         <p className='mt-6 text-center text-sm text-slate-500'>
           Need a user account?{' '}
-          <Link to='/register/employee' className='font-medium text-indigo-600 hover:text-indigo-500'>Create an employee account</Link>
-          {' '}or{' '}
-          <Link to='/register/employer' className='font-medium text-indigo-600 hover:text-indigo-500'>Create an employer account</Link>
+          <Link to='/register' className='font-medium text-indigo-600 hover:text-indigo-500'>Create an account</Link>
           .
         </p>
       </div>
