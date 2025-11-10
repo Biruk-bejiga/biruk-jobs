@@ -129,10 +129,10 @@ const LoginPage = () => {
         </form>
 
         <p className='mt-6 text-center text-sm text-slate-500'>
-          Need a user account? Contact your platform administrator or{' '}
-          <Link to='/' className='font-medium text-indigo-600 hover:text-indigo-500'>
-            return to the homepage
-          </Link>
+          Need a user account?{' '}
+          <Link to='/register/employee' className='font-medium text-indigo-600 hover:text-indigo-500'>Create an employee account</Link>
+          {' '}or{' '}
+          <Link to='/register/employer' className='font-medium text-indigo-600 hover:text-indigo-500'>Create an employer account</Link>
           .
         </p>
       </div>

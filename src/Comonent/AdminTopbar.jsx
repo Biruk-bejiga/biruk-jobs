@@ -1,7 +1,11 @@
 import PropTypes from 'prop-types';
 import { FiMenu, FiBell, FiMoon, FiSun } from 'react-icons/fi';
+import { useAuth } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 const AdminTopbar = ({ onToggleSidebar, onToggleTheme, isDarkMode, user }) => {
+  const { logout } = useAuth();
+  const navigate = useNavigate();
   const displayName = user?.fullName ?? 'Alex Bennett';
   const initials = (displayName || 'A')
     .split(' ')
@@ -35,7 +39,7 @@ const AdminTopbar = ({ onToggleSidebar, onToggleTheme, isDarkMode, user }) => {
           aria-label={isDarkMode ? 'Activate light mode' : 'Activate dark mode'}
         >
           {isDarkMode ? <FiSun className="text-lg" /> : <FiMoon className="text-lg" />}
-        </button>
+  </button>
 
         <button
           type="button"
@@ -49,13 +53,31 @@ const AdminTopbar = ({ onToggleSidebar, onToggleTheme, isDarkMode, user }) => {
         </button>
 
         <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-1.5 shadow-sm dark:border-slate-700 dark:bg-slate-900">
-          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-indigo-500 text-sm font-semibold text-white">
-            {initials}
+          <div
+            role="button"
+            onClick={() => navigate('/admin/profile')}
+            className="flex cursor-pointer items-center gap-2"
+            title="View profile"
+          >
+            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-indigo-500 text-sm font-semibold text-white">
+              {initials}
+            </div>
+            <div className="hidden text-left text-sm leading-tight sm:block">
+              <p className="font-semibold text-slate-900 dark:text-white">{displayName}</p>
+              <p className="text-slate-500 dark:text-slate-400">{user?.role ? `${user.role.charAt(0).toUpperCase() + user.role.slice(1)} Admin` : 'Platform Admin'}</p>
+            </div>
           </div>
-          <div className="hidden text-left text-sm leading-tight sm:block">
-            <p className="font-semibold text-slate-900 dark:text-white">{displayName}</p>
-            <p className="text-slate-500 dark:text-slate-400">{user?.role ? `${user.role.charAt(0).toUpperCase() + user.role.slice(1)} Admin` : 'Platform Admin'}</p>
-          </div>
+
+          <button
+            type="button"
+            onClick={async () => {
+              await logout()
+              navigate('/login', { replace: true })
+            }}
+            className="ml-2 rounded-md px-3 py-1 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-200"
+          >
+            Sign out
+          </button>
         </div>
       </div>
     </header>
@@ -66,6 +88,7 @@ AdminTopbar.propTypes = {
   onToggleSidebar: PropTypes.func.isRequired,
   onToggleTheme: PropTypes.func.isRequired,
   isDarkMode: PropTypes.bool.isRequired,
+  user: PropTypes.object,
 };
 
 export default AdminTopbar;

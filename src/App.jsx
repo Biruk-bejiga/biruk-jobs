@@ -30,6 +30,8 @@ import EmployeeProfile from './Pages/Employee/EmployeeProfile'
 import EmployerCreateJob from './Pages/Employer/EmployerCreateJob'
 import ProtectedRoute from './Comonent/ProtectedRoute'
 import LoginPage from './Pages/LoginPage'
+import RegisterEmployee from './Pages/RegisterEmployee'
+import RegisterEmployer from './Pages/RegisterEmployer'
 import { useAuth } from './context/AuthContext'
 
 const parseErrorMessage = async (response, fallbackMessage) => {
@@ -71,6 +73,8 @@ const App = () => {
               <Route path='/jobs' element={<JobsPage />} />
               <Route path='/jobs/:id' element={<JobPage deleteJob={deleteJob} />} loader={jobLoader} />
               <Route path='/login' element={<LoginPage />} />
+                <Route path='/register/employee' element={<RegisterEmployee />} />
+                <Route path='/register/employer' element={<RegisterEmployer />} />
               <Route path='*' element={<NotFoundPage />} />
             </Route>
             <Route
