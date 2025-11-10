@@ -1,0 +1,4 @@
+- [ ] Inspect `ProtectedRoute.jsx` and relevant auth hooks to find useEffect without dependency array causing re-render loop
+- [ ] Review `AuthContext.jsx` to ensure state updates are stable and memo dependencies correct
+- [ ] Patch components to add proper dependency arrays or refactor logic to avoid infinite re-render
+- [ ] Verify login/logout flow manually after fix

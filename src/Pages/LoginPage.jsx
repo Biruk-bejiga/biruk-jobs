@@ -16,10 +16,29 @@ const getDefaultDashboardPath = (role) => {
   }
 }
 
+const isPathAllowedForRole = (role, pathname) => {
+  if (!pathname) {
+    return true
+  }
+
+  if (pathname.startsWith('/admin')) {
+    return role === 'admin'
+  }
+  if (pathname.startsWith('/employer')) {
+    return role === 'employer'
+  }
+  if (pathname.startsWith('/employee')) {
+    return role === 'employee'
+  }
+
+  return true
+}
+
 const LoginPage = () => {
   const { login, isAuthenticated, user } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
+  const fromPath = location.state?.from?.pathname
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState(null)
@@ -28,9 +47,11 @@ const LoginPage = () => {
   useEffect(() => {
     if (!isAuthenticated) return
 
-    const redirectTo = location.state?.from?.pathname ?? getDefaultDashboardPath(user?.role)
+    const fallbackPath = getDefaultDashboardPath(user?.role)
+    const redirectTo = isPathAllowedForRole(user?.role, fromPath) ? fromPath : fallbackPath
+
     navigate(redirectTo, { replace: true })
-  }, [isAuthenticated, location.state, navigate, user?.role])
+  }, [fromPath, isAuthenticated, navigate, user?.role])
 
   const handleSubmit = async (event) => {
     event.preventDefault()
@@ -38,10 +59,12 @@ const LoginPage = () => {
     setIsSubmitting(true)
 
     try {
-  const userData = await login(email.trim(), password)
+      const userData = await login(email.trim(), password)
       toast.success('Welcome back!')
-  const redirectPath = location.state?.from?.pathname ?? getDefaultDashboardPath(userData?.role)
-  navigate(redirectPath, { replace: true })
+      const redirectPath = isPathAllowedForRole(userData?.role, fromPath)
+        ? fromPath
+        : getDefaultDashboardPath(userData?.role)
+      navigate(redirectPath, { replace: true })
     } catch (err) {
       const message = err?.message ?? 'Unable to sign in. Please try again.'
       setError(message)
