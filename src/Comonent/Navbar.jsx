@@ -1,10 +1,28 @@
-import {NavLink} from 'react-router-dom'
+import { NavLink } from 'react-router-dom'
 import logo from '../assets/image/logo.png'
+import { useAuth } from '../context/AuthContext'
+
+const getDashboardPath = (role) => {
+  if (role === 'admin') return '/admin'
+  if (role === 'employer') return '/employer'
+  if (role === 'employee') return '/employee'
+  return '/'
+}
 
 const Navbar = () => {
-  const linkClass = ({isActive}) => isActive ?
-  'bg-black text-white hover:bg-gray-900 hover:text-white rounded-md px-3 py-2' : 
-  'text-white hover:bg-gray-900 hover:text-white rounded-md px-3 py-2'
+  const { isAuthenticated, user, logout } = useAuth()
+
+  const linkClass = ({ isActive }) =>
+    isActive
+      ? 'bg-black text-white hover:bg-gray-900 hover:text-white rounded-md px-3 py-2'
+      : 'text-white hover:bg-gray-900 hover:text-white rounded-md px-3 py-2'
+
+  const dashboardPath = getDashboardPath(user?.role)
+
+  const handleSignOut = async () => {
+    await logout()
+  }
+
   return (
     <nav className="bg-indigo-700 border-b border-indigo-500">
       <div className="mx-auto max-w-7xl px-2 sm:px-6 lg:px-8">
@@ -34,14 +52,30 @@ const Navbar = () => {
                   to="/jobs"
                   className={linkClass} >Jobs
                   </NavLink>
-                <NavLink
-                  to="/add-job"
-                  className={linkClass} >Add Job
-                  </NavLink>
-                <NavLink
-                  to="/admin"
-                  className={linkClass} >Admin
-                  </NavLink>
+                {user?.role === 'employer' ? (
+                  <NavLink
+                    to="/employer/jobs/new"
+                    className={linkClass} >Add Job
+                    </NavLink>
+                ) : null}
+                {isAuthenticated ? (
+                  <NavLink
+                    to={dashboardPath}
+                    className={linkClass} >Dashboard
+                    </NavLink>
+                ) : null}
+                {isAuthenticated ? (
+                  <button
+                    type="button"
+                    onClick={handleSignOut}
+                    className="rounded-md px-3 py-2 text-sm font-medium text-white transition hover:bg-gray-900"
+                  >Sign out</button>
+                ) : (
+                  <NavLink
+                    to="/login"
+                    className={linkClass} >Sign In
+                    </NavLink>
+                )}
               </div>
             </div>
           </div>

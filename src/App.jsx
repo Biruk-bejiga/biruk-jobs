@@ -7,8 +7,7 @@ import JobsPage from './Pages/JobsPage'
 import NotFoundPage from './Comonent/NotFoundPage'
 import JobPage from './Pages/JobPage'
 import { jobLoader } from './Pages/jobLoader'
-import AddJobPage from './Pages/AddJobPage'
-import EditJobPage from './Pages/EditJobPage'
+import EditEmployerJobPage from './Pages/Employer/EmployerEditJob'
 import AdminLayout from './layouts/AdminLayout'
 import AdminDashboard from './Pages/Admin/AdminDashboard'
 import AdminUsers from './Pages/Admin/AdminUsers'
@@ -28,6 +27,7 @@ import EmployeeJobs from './Pages/Employee/EmployeeJobs'
 import EmployeeApplications from './Pages/Employee/EmployeeApplications'
 import EmployeeFavorites from './Pages/Employee/EmployeeFavorites'
 import EmployeeProfile from './Pages/Employee/EmployeeProfile'
+import EmployerCreateJob from './Pages/Employer/EmployerCreateJob'
 import ProtectedRoute from './Comonent/ProtectedRoute'
 import LoginPage from './Pages/LoginPage'
 import { useAuth } from './context/AuthContext'
@@ -45,26 +45,6 @@ const parseErrorMessage = async (response, fallbackMessage) => {
 const App = () => {
   const { authFetch } = useAuth()
 
-  const addJob = useCallback(
-    async (newJob) => {
-      const response = await authFetch('/api/jobs', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(newJob),
-      })
-
-      if (!response.ok) {
-        const message = await parseErrorMessage(response, 'Failed to create job')
-        throw new Error(message)
-      }
-
-      return response.json().catch(() => undefined)
-    },
-    [authFetch],
-  )
-
   const deleteJob = useCallback(
     async (id) => {
       const response = await authFetch(`/api/jobs/${id}`, {
@@ -81,26 +61,6 @@ const App = () => {
     [authFetch],
   )
 
-  const updateJob = useCallback(
-    async (job) => {
-      const response = await authFetch(`/api/jobs/${job.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(job),
-      })
-
-      if (!response.ok) {
-        const message = await parseErrorMessage(response, 'Failed to update job')
-        throw new Error(message)
-      }
-
-      return response.json().catch(() => undefined)
-    },
-    [authFetch],
-  )
-
   const router = useMemo(
     () =>
       createBrowserRouter(
@@ -109,12 +69,6 @@ const App = () => {
             <Route path='/' element={<MainLayout />}>
               <Route index element={<HomePage />} />
               <Route path='/jobs' element={<JobsPage />} />
-              <Route path='/add-job' element={<AddJobPage addJobSubmit={addJob} />} />
-              <Route
-                path='/edit-job/:id'
-                element={<EditJobPage updatedJobSubmit={updateJob} />}
-                loader={jobLoader}
-              />
               <Route path='/jobs/:id' element={<JobPage deleteJob={deleteJob} />} loader={jobLoader} />
               <Route path='/login' element={<LoginPage />} />
               <Route path='*' element={<NotFoundPage />} />
@@ -145,6 +99,8 @@ const App = () => {
             >
               <Route index element={<EmployerDashboard />} />
               <Route path='jobs' element={<EmployerJobs />} />
+              <Route path='jobs/new' element={<EmployerCreateJob />} />
+              <Route path='jobs/:jobId/edit' element={<EditEmployerJobPage />} />
               <Route path='applications' element={<EmployerApplications />} />
               <Route path='team' element={<EmployerTeam />} />
               <Route path='profile' element={<EmployerProfile />} />
@@ -168,7 +124,7 @@ const App = () => {
           </>
         )
       ),
-    [addJob, deleteJob, updateJob],
+    [deleteJob],
   )
 
   return (

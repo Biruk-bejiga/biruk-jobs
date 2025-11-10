@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Link, useNavigate } from 'react-router-dom';
 import { FiEdit, FiPlus, FiTrash2 } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import Spinner from '../../Comonent/Spinner';
@@ -14,9 +14,11 @@ const statusLabels = {
 
 const EmployerJobs = () => {
   const { authFetchJson } = useAuth();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [statusFilter, setStatusFilter] = useState('all');
 
-  const { data, isLoading, isError, error, refetch } = useQuery({
+  const { data, isLoading, isError, error } = useQuery({
     queryKey: ['employer', 'jobs', statusFilter],
     queryFn: async () => {
       const params = new URLSearchParams();
@@ -30,14 +32,28 @@ const EmployerJobs = () => {
 
   const jobs = useMemo(() => data ?? [], [data]);
 
-  const handleDelete = async (jobId) => {
-    try {
+  const deleteMutation = useMutation({
+    mutationFn: async (jobId) => {
       await authFetchJson(`/api/jobs/${jobId}`, { method: 'DELETE' }, 'Failed to delete job');
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['employer', 'jobs'] });
       toast.success('Job deleted');
-      await refetch();
-    } catch (err) {
-      toast.error(err.message);
+    },
+    onError: (err) => {
+      toast.error(err.message ?? 'Failed to delete job');
+    },
+  });
+
+  const handleDelete = async (jobId) => {
+    if (!window.confirm('Delete this job? Applicants will lose access.')) {
+      return;
     }
+    deleteMutation.mutate(jobId);
+  };
+
+  const handleEdit = (jobId) => {
+    navigate(`/employer/jobs/${jobId}/edit`);
   };
 
   return (
@@ -48,7 +64,7 @@ const EmployerJobs = () => {
           <p className="text-sm text-slate-500">Draft, publish, or archive open roles.</p>
         </div>
         <Link
-          to="/add-job"
+          to="/employer/jobs/new"
           className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-500"
         >
           <FiPlus />
@@ -110,12 +126,13 @@ const EmployerJobs = () => {
                       Updated {new Date(job.updatedAt ?? job.createdAt).toLocaleDateString()}
                     </p>
                     <div className="flex items-center gap-2">
-                      <Link
-                        to={`/edit-job/${job.id}`}
+                      <button
+                        type="button"
+                        onClick={() => handleEdit(job.id)}
                         className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:border-indigo-200 hover:text-indigo-600"
                       >
                         <FiEdit /> Edit
-                      </Link>
+                      </button>
                       <button
                         type="button"
                         onClick={() => handleDelete(job.id)}

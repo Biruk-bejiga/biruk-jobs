@@ -2,6 +2,8 @@ import { Router } from 'express';
 import createHttpError from 'http-errors';
 import { z } from 'zod';
 import { authenticate, authorizeRoles } from '../middleware/auth.js';
+import { verifyAccessToken } from '../lib/jwt.js';
+import { getUserById } from '../services/userService.js';
 import {
   applyToJob,
   createJob,
@@ -35,6 +37,33 @@ const applicationSchema = z.object({
   coverLetter: z.string().optional(),
   resumeUrl: z.string().url().optional(),
 });
+
+async function getRequester(req) {
+  const header = req.get('Authorization');
+  const token = header?.startsWith('Bearer ')
+    ? header.slice('Bearer '.length)
+    : null;
+
+  if (!token) {
+    return null;
+  }
+
+  try {
+    const payload = verifyAccessToken(token);
+    const user = await getUserById(payload.sub);
+    if (!user || !user.isActive) {
+      return null;
+    }
+
+    return {
+      id: user.id,
+      role: user.role,
+    };
+  } catch (error) {
+    console.error('Failed to authenticate optional user for job request', error);
+    return null;
+  }
+}
 
 const listQuerySchema = z.object({
   status: z.enum(['draft', 'published', 'closed']).optional(),
@@ -76,6 +105,29 @@ router.get('/', async (req, res, next) => {
     const filters = listQuerySchema.parse(req.query);
     const jobsList = await listJobs(filters);
     res.json({ data: jobsList });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get('/:jobId', async (req, res, next) => {
+  try {
+    const { jobId } = req.params;
+    const job = await getJobById(jobId);
+    if (!job) {
+      throw createHttpError(404, 'Job not found');
+    }
+
+    const requester = await getRequester(req);
+    const isOwner = requester?.role === 'employer' && requester.id === job.employerId;
+    const isAdmin = requester?.role === 'admin';
+    const isVisible = job.status === 'published' || isOwner || isAdmin;
+
+    if (!isVisible) {
+      throw createHttpError(404, 'Job not found');
+    }
+
+    res.json({ data: job });
   } catch (err) {
     next(err);
   }

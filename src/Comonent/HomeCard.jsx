@@ -1,7 +1,11 @@
 import { Link } from 'react-router-dom'
 import Card from './Card'
+import { useAuth } from '../context/AuthContext'
 
 const HomeCard = () => {
+  const { isAuthenticated, user } = useAuth()
+  const employerCtaPath = isAuthenticated && user?.role === 'employer' ? '/employer/jobs/new' : '/login'
+
   return (
     <section className="py-4">
       <div className="container-xl lg:container m-auto">
@@ -23,10 +27,10 @@ const HomeCard = () => {
               List your job to find the perfect developer for the role
             </p>
             <Link
-              to="/add-job"
+              to={employerCtaPath}
               className="inline-block bg-indigo-500 text-white rounded-lg px-4 py-2 hover:bg-indigo-600"
             >
-              Add Job
+              {isAuthenticated && user?.role === 'employer' ? 'Create a Job' : 'Post a Job'}
             </Link>
             </Card>
         </div>
