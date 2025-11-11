@@ -3,6 +3,10 @@ import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { FaMapMarker } from 'react-icons/fa';
 
+const SUMMARY_PREVIEW_LIMIT = 220;
+const SUMMARY_COLLAPSED_MAX_HEIGHT = '3.6em';
+const SUMMARY_EXPANDED_MAX_HEIGHT = '1000px';
+
 const formatEmploymentType = (value) => {
   if (!value) return 'Unknown type';
   return value.replace(/_/g, ' ');
@@ -33,13 +37,28 @@ const formatSalaryRange = (min, max, currency = 'USD') => {
 const JobListing = ({ job }) => {
   const [expanded, setExpanded] = useState(false);
 
+  const baseSummary = useMemo(() => {
+    const summaryText = typeof job.summary === 'string' ? job.summary.trim() : '';
+    const descriptionText = typeof job.description === 'string' ? job.description.trim() : '';
+    return summaryText || descriptionText || '';
+  }, [job.description, job.summary]);
+
   const summary = useMemo(() => {
-    const base = job.summary || job.description || '';
-    if (expanded || base.length <= 180) {
-      return base;
+    if (!baseSummary) return '';
+    if (expanded || baseSummary.length <= SUMMARY_PREVIEW_LIMIT) {
+      return baseSummary;
     }
-    return `${base.slice(0, 180)}…`;
-  }, [expanded, job.description, job.summary]);
+    return `${baseSummary.slice(0, SUMMARY_PREVIEW_LIMIT).trimEnd()}…`;
+  }, [baseSummary, expanded]);
+
+  const isExpandable = baseSummary.length > SUMMARY_PREVIEW_LIMIT;
+
+  const summaryStyle = {
+    maxHeight: expanded ? SUMMARY_EXPANDED_MAX_HEIGHT : SUMMARY_COLLAPSED_MAX_HEIGHT,
+    transition: 'max-height 0.3s ease, opacity 0.3s ease',
+    opacity: expanded ? 1 : 0.95,
+    overflow: 'hidden',
+  };
 
   const employmentLabel = formatEmploymentType(job.employmentType);
   const salaryLabel = formatSalaryRange(job.salaryMin, job.salaryMax, job.salaryCurrency);
@@ -55,14 +74,16 @@ const JobListing = ({ job }) => {
           <h3 className="mt-2 text-xl font-bold text-slate-900">{job.title}</h3>
         </header>
 
-        <p className="mb-4 text-sm text-slate-600">{summary}</p>
-        {job.summary || job.description ? (
+        <p className="mb-4 break-words text-sm text-slate-600" style={summaryStyle}>
+          {summary || 'No summary provided.'}
+        </p>
+        {isExpandable ? (
           <button
             type="button"
             onClick={() => setExpanded((prev) => !prev)}
             className="text-sm font-medium text-indigo-600 transition hover:text-indigo-500"
           >
-            {expanded ? 'Show less' : 'Read more'}
+            {expanded ? 'Read less' : 'Read more'}
           </button>
         ) : null}
 

@@ -16,9 +16,15 @@ const getDefaultDashboardPath = (role) => {
   }
 }
 
+const AUTH_PAGE_PREFIXES = ['/login', '/register']
+
 const isPathAllowedForRole = (role, pathname) => {
   if (!pathname) {
     return true
+  }
+
+  if (AUTH_PAGE_PREFIXES.some((prefix) => pathname.startsWith(prefix))) {
+    return false
   }
 
   if (pathname.startsWith('/admin')) {
@@ -34,6 +40,20 @@ const isPathAllowedForRole = (role, pathname) => {
   return true
 }
 
+const getRedirectDestination = (role, fromPath) => {
+  const fallbackPath = getDefaultDashboardPath(role)
+
+  if (!fromPath) {
+    return fallbackPath
+  }
+
+  if (!isPathAllowedForRole(role, fromPath)) {
+    return fallbackPath
+  }
+
+  return fromPath
+}
+
 const LoginPage = () => {
   const { login, isAuthenticated, user } = useAuth()
   const navigate = useNavigate()
@@ -47,11 +67,12 @@ const LoginPage = () => {
   useEffect(() => {
     if (!isAuthenticated) return
 
-    const fallbackPath = getDefaultDashboardPath(user?.role)
-    const redirectTo = isPathAllowedForRole(user?.role, fromPath) ? fromPath : fallbackPath
+    const redirectTo = getRedirectDestination(user?.role, fromPath)
 
-    navigate(redirectTo, { replace: true })
-  }, [fromPath, isAuthenticated, navigate, user?.role])
+    if (redirectTo && location.pathname !== redirectTo) {
+      navigate(redirectTo, { replace: true })
+    }
+  }, [fromPath, isAuthenticated, navigate, user?.role, location.pathname])
 
   const handleSubmit = async (event) => {
     event.preventDefault()
@@ -61,9 +82,7 @@ const LoginPage = () => {
     try {
       const userData = await login(email.trim(), password)
       toast.success('Welcome back!')
-      const redirectPath = isPathAllowedForRole(userData?.role, fromPath)
-        ? fromPath
-        : getDefaultDashboardPath(userData?.role)
+      const redirectPath = getRedirectDestination(userData?.role, fromPath)
       navigate(redirectPath, { replace: true })
     } catch (err) {
       const message = err?.message ?? 'Unable to sign in. Please try again.'

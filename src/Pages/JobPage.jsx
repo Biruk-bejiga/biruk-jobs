@@ -211,26 +211,26 @@ const JobPage = ({ deleteJob }) => {
                 {job.summary ? (
                   <section>
                     <h3 className="text-lg font-semibold text-slate-900">Summary</h3>
-                    <p className="mt-2 text-sm leading-relaxed text-slate-600">{job.summary}</p>
+                    <p className="mt-2 break-words text-sm leading-relaxed text-slate-600">{job.summary}</p>
                   </section>
                 ) : null}
 
                 <section>
                   <h3 className="text-lg font-semibold text-slate-900">Job Description</h3>
-                  <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-slate-600">{job.description}</p>
+                  <p className="mt-2 break-words whitespace-pre-line text-sm leading-relaxed text-slate-600">{job.description}</p>
                 </section>
 
                 {job.responsibilities ? (
                   <section>
                     <h3 className="text-lg font-semibold text-slate-900">Responsibilities</h3>
-                    <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-slate-600">{job.responsibilities}</p>
+                    <p className="mt-2 break-words whitespace-pre-line text-sm leading-relaxed text-slate-600">{job.responsibilities}</p>
                   </section>
                 ) : null}
 
                 {job.requirements ? (
                   <section>
                     <h3 className="text-lg font-semibold text-slate-900">Requirements</h3>
-                    <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-slate-600">{job.requirements}</p>
+                    <p className="mt-2 break-words whitespace-pre-line text-sm leading-relaxed text-slate-600">{job.requirements}</p>
                   </section>
                 ) : null}
 

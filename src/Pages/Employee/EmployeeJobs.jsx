@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { FiBookmark, FiBriefcase, FiMapPin, FiSearch, FiSliders } from 'react-icons/fi';
 import Spinner from '../../Comonent/Spinner';
@@ -52,21 +52,6 @@ const EmployeeJobs = () => {
       toast.error(err.message);
     }
   };
-
-  const applyMutation = useMutation({
-    mutationFn: async (jobId) => {
-      const response = await authFetchJson(`/api/jobs/${jobId}/apply`, { method: 'POST' }, 'Unable to apply');
-      return response?.data ?? null;
-    },
-    onSuccess: () => {
-      toast.success('Application submitted');
-      queryClient.invalidateQueries({ queryKey: ['employee', 'applications'] });
-      queryClient.invalidateQueries({ queryKey: ['jobs'] });
-    },
-    onError: (err) => {
-      toast.error(err?.message ?? 'Unable to submit application');
-    },
-  });
 
   const handleApply = (jobId) => {
     if (!user) {
