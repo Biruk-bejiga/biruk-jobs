@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { FiBookmark, FiBriefcase, FiMapPin, FiSearch, FiSliders } from 'react-icons/fi';
 import Spinner from '../../Comonent/Spinner';
+import QuickApplyModal from '../../Comonent/QuickApplyModal';
 import { useAuth } from '../../context/AuthContext';
 import { toast } from 'react-toastify';
 
@@ -21,6 +22,7 @@ const EmployeeJobs = () => {
   const [location, setLocation] = useState('');
   const [employmentType, setEmploymentType] = useState('');
   const [remoteOnly, setRemoteOnly] = useState(false);
+  const [selectedJob, setSelectedJob] = useState(null);
 
   const query = useQuery({
     queryKey: ['jobs', { search, location, employmentType, remoteOnly }],
@@ -71,8 +73,13 @@ const EmployeeJobs = () => {
       toast.info('Please sign in to apply');
       return;
     }
-    applyMutation.mutate(jobId);
+    // open quick-apply modal instead of instant apply
+    setSelectedJob(jobId)
   };
+  const handleModalApplied = () => {
+    queryClient.invalidateQueries({ queryKey: ['employee', 'applications'] })
+    queryClient.invalidateQueries({ queryKey: ['jobs'] })
+  }
 
   return (
     <div className="space-y-6">
@@ -189,14 +196,15 @@ const EmployeeJobs = () => {
                     Save
                   </button>
                   {user?.role === 'employee' && job.status === 'published' ? (
-                    <button
-                      type="button"
-                      onClick={() => handleApply(job.id)}
-                      disabled={applyMutation.isLoading}
-                      className="inline-flex items-center gap-1 rounded-full bg-indigo-600 px-3 py-1 text-xs font-medium text-white hover:bg-indigo-500"
-                    >
-                      Apply
-                    </button>
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => handleApply(job.id)}
+                        className="inline-flex items-center gap-1 rounded-full bg-indigo-600 px-3 py-1 text-xs font-medium text-white hover:bg-indigo-500"
+                      >
+                        Apply
+                      </button>
+                    </>
                   ) : null}
                 </div>
               </div>
@@ -211,6 +219,15 @@ const EmployeeJobs = () => {
           ))}
         </div>
       )}
+
+      {selectedJob ? (
+        <QuickApplyModal
+          job={jobs.find((j) => j.id === selectedJob) || { id: selectedJob, title: 'Job' }}
+          open={Boolean(selectedJob)}
+          onClose={() => setSelectedJob(null)}
+          onApplied={handleModalApplied}
+        />
+      ) : null}
     </div>
   );
 };
