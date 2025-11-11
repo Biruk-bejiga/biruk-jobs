@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
-import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
+import logo from '../assets/image/logo.png';
+import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { FiBriefcase, FiClipboard, FiHome, FiLogOut, FiSettings, FiUsers } from 'react-icons/fi';
 import { useAuth } from '../context/AuthContext';
 
@@ -36,9 +37,15 @@ const EmployerLayout = () => {
           }`}
         >
           <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
-            <Link to="/" className="text-xl font-semibold text-indigo-600">
-              FlexiSphere Employer
-            </Link>
+            <NavLink className="flex flex-shrink-0 items-center mr-4" to="/">
+              <img
+                className="h-10 w-auto"
+                src={logo}
+                alt="React Jobs"
+              />
+              <span className="hidden md:block text-white text-2xl font-bold ml-2"
+                >dev Jobs</span>
+            </NavLink>
             <button
               type="button"
               onClick={() => setSidebarOpen(false)}
@@ -85,16 +92,16 @@ const EmployerLayout = () => {
         ) : null}
 
         <div className="flex min-h-screen flex-1 flex-col">
-          <header className="flex items-center justify-between border-b border-slate-200 bg-white px-6 py-4">
+          <header className="flex items-center justify-between border-b border-indigo-600 bg-indigo-700 px-6 py-4 text-white">
             <div>
-              <p className="text-sm text-slate-500">Employer Console</p>
-              <h1 className="text-lg font-semibold text-slate-900">{activeLabel || 'Overview'}</h1>
+              <p className="text-sm text-indigo-200">Employer Console</p>
+              <h1 className="text-lg font-semibold text-white">{activeLabel || 'Overview'}</h1>
             </div>
             <div className="flex items-center gap-3">
               <button
                 type="button"
                 onClick={() => setSidebarOpen((prev) => !prev)}
-                className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2 text-sm font-medium text-slate-600 transition hover:border-indigo-200 hover:text-indigo-600 lg:hidden"
+                className="inline-flex items-center gap-2 rounded-xl border border-transparent px-3 py-2 text-sm font-medium text-white transition lg:hidden"
               >
                 Menu
               </button>

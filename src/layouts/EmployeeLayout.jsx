@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import logo from '../assets/image/logo.png';
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import { FiBookmark, FiBriefcase, FiHome, FiLogOut, FiUser } from 'react-icons/fi';
 import { useAuth } from '../context/AuthContext';
@@ -36,9 +37,15 @@ const EmployeeLayout = () => {
           }`}
         >
           <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
-            <Link to="/" className="text-xl font-semibold text-indigo-600">
-              FlexiSphere Talent
-            </Link>
+            <NavLink className="flex flex-shrink-0 items-center mr-4" to="/">
+                          <img
+                            className="h-10 w-auto"
+                            src={logo}
+                            alt="React Jobs"
+                          />
+                          <span className="hidden md:block text-white text-2xl font-bold ml-2"
+                            >dev Jobs</span>
+                        </NavLink>
             <button
               type="button"
               onClick={() => setSidebarOpen(false)}
