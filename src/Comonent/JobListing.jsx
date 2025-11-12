@@ -3,8 +3,8 @@ import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { FaMapMarker } from 'react-icons/fa';
 
-const SUMMARY_PREVIEW_LIMIT = 160;
-const SUMMARY_COLLAPSED_MAX_HEIGHT = '3.6em';
+const SUMMARY_PREVIEW_LIMIT = 90;
+const SUMMARY_COLLAPSED_MAX_HEIGHT = '3.9em';
 const SUMMARY_EXPANDED_MAX_HEIGHT = '1000px';
 
 const formatEmploymentType = (value) => {
