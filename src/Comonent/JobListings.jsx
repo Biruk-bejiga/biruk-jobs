@@ -1,5 +1,6 @@
 import PropTypes from 'prop-types';
 import { useEffect, useMemo, useState } from 'react';
+import { resolveApiUrl } from '../lib/apiClient';
 import JobListing from './JobListing';
 import Spinner from './Spinner';
 
@@ -10,7 +11,7 @@ const JobListings = ({ isHome = false }) => {
   useEffect(() => {
     const controller = new AbortController();
     const params = new URLSearchParams({ status: 'published' });
-    const apiUrl = `/api/jobs?${params.toString()}`;
+    const apiUrl = resolveApiUrl(`/api/jobs?${params.toString()}`);
 
     const fetchJobs = async () => {
       try {

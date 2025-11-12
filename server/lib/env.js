@@ -24,7 +24,7 @@ export function loadEnv() {
     JWT_REFRESH_EXPIRES_IN = '7d',
     SESSION_COOKIE_NAME = 'biruk_jobs_session',
     SESSION_COOKIE_DOMAIN,
-    SESSION_COOKIE_SECURE = 'false',
+    SESSION_COOKIE_SECURE = 'true',
     PORT = '4000',
     CORS_ORIGIN,
   } = process.env;

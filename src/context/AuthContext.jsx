@@ -9,6 +9,7 @@ import {
 } from 'react';
 
 import Spinner from '../Comonent/Spinner';
+import { resolveApiUrl } from '../lib/apiClient';
 
 const AuthContext = createContext(undefined);
 const ACCESS_TOKEN_KEY = 'accessToken';
@@ -53,7 +54,7 @@ export const AuthProvider = ({ children }) => {
 
   const refreshAccessToken = useCallback(async () => {
     try {
-      const response = await fetch('/api/auth/refresh', {
+  const response = await fetch(resolveApiUrl('/api/auth/refresh'), {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
@@ -79,13 +80,14 @@ export const AuthProvider = ({ children }) => {
 
   const authFetch = useCallback(
     async (input, init = {}) => {
-      const headers = new Headers(init.headers || {});
+  const headers = new Headers(init.headers || {});
+  const target = typeof input === 'string' ? resolveApiUrl(input) : input;
 
       if (accessToken) {
         headers.set('Authorization', `Bearer ${accessToken}`);
       }
 
-      let response = await fetch(input, {
+  let response = await fetch(target, {
         ...init,
         headers,
         credentials: 'include',
@@ -106,7 +108,7 @@ export const AuthProvider = ({ children }) => {
       const retryHeaders = new Headers(init.headers || {});
       retryHeaders.set('Authorization', `Bearer ${refreshedToken}`);
 
-      response = await fetch(input, {
+  response = await fetch(target, {
         ...init,
         headers: retryHeaders,
         credentials: 'include',
@@ -139,7 +141,7 @@ export const AuthProvider = ({ children }) => {
   const login = useCallback(
     async (email, password) => {
       try {
-        const response = await fetch('/api/auth/login', {
+  const response = await fetch(resolveApiUrl('/api/auth/login'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include',
@@ -179,7 +181,9 @@ export const AuthProvider = ({ children }) => {
         headers.set('Authorization', `Bearer ${accessToken}`);
       }
 
-      await fetch('/api/auth/logout', {
+  const target = resolveApiUrl('/api/auth/logout');
+
+  await fetch(target, {
         method: 'POST',
         credentials: 'include',
         headers,
