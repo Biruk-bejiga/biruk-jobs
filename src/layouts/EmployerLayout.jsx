@@ -43,7 +43,7 @@ const EmployerLayout = () => {
                 src={logo}
                 alt="React Jobs"
               />
-              <span className="hidden md:block text-white text-2xl font-bold ml-2"
+              <span className="hidden md:block text-black text-2xl font-bold ml-2"
                 >dev Jobs</span>
             </NavLink>
             <button
@@ -115,7 +115,7 @@ const EmployerLayout = () => {
               </button>
             </div>
           </header>
-          <main className="flex-1 bg-slate-50 px-4 py-6 sm:px-6 lg:px-10">
+          <main className="flex-1 bg-slate-50 px-0 py-0 sm:px-0 lg:px-0">
             <Outlet />
           </main>
         </div>

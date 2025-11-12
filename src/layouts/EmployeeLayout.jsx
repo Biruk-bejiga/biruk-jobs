@@ -92,16 +92,16 @@ const EmployeeLayout = () => {
         ) : null}
 
         <div className="flex min-h-screen flex-1 flex-col">
-          <header className="flex items-center justify-between border-b border-slate-200 bg-white px-6 py-4">
+          <header className="flex items-center justify-between border-b border-indigo-600 bg-indigo-700 px-6 py-4 text-white">
             <div>
-              <p className="text-sm text-slate-500">Talent Workspace</p>
-              <h1 className="text-lg font-semibold text-slate-900">{activeLabel || 'Dashboard'}</h1>
+              <p className="text-sm text-indigo-200">Talent Workspace</p>
+              <h1 className="text-lg font-semibold text-white">{activeLabel || 'Dashboard'}</h1>
             </div>
             <div className="flex items-center gap-3">
               <button
                 type="button"
                 onClick={() => setSidebarOpen((prev) => !prev)}
-                className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2 text-sm font-medium text-slate-600 transition hover:border-indigo-200 hover:text-indigo-600 lg:hidden"
+                className="inline-flex items-center gap-2 rounded-xl border border-transparent px-3 py-2 text-sm font-medium text-white transition lg:hidden"
               >
                 Menu
               </button>
@@ -115,7 +115,7 @@ const EmployeeLayout = () => {
               </button>
             </div>
           </header>
-          <main className="flex-1 bg-slate-50 px-4 py-6 sm:px-6 lg:px-10">
+          <main className="flex-1 bg-slate-50 px-0 py-0 sm:px-0 lg:px-0">
             <Outlet />
           </main>
         </div>
