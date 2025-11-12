@@ -2,10 +2,24 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import { useAuth } from '../context/AuthContext'
+import { resolveApiUrl } from '../lib/apiClient'
+
+const getDefaultDashboardPath = (role) => {
+  switch (role) {
+    case 'admin':
+      return '/admin'
+    case 'employer':
+      return '/employer'
+    case 'employee':
+      return '/employee'
+    default:
+      return '/'
+  }
+}
 
 const RegisterEmployer = () => {
   const navigate = useNavigate()
-  const { login } = useAuth()
+  const { login, initializeSession } = useAuth()
   const [form, setForm] = useState({
     fullName: '',
     email: '',
@@ -35,7 +49,7 @@ const RegisterEmployer = () => {
 
     setIsSubmitting(true)
     try {
-      const res = await fetch('/api/auth/register', {
+      const res = await fetch(resolveApiUrl('/api/auth/register'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -48,16 +62,30 @@ const RegisterEmployer = () => {
           companyWebsite: form.companyWebsite || undefined,
         }),
       })
-
       if (!res.ok) {
-        const text = await res.text()
-        throw new Error(text || 'Registration failed')
+        let msg = await res.text()
+        try {
+          const body = JSON.parse(msg)
+          msg = body?.error?.message ?? body?.message ?? msg
+        } catch (err) {
+          // swallow
+        }
+        throw new Error(msg || 'Registration failed')
       }
 
-      // automatically sign in after register via login helper
-      await login(form.email, form.password)
+      const body = await res.json()
+      const token = body?.data?.accessToken ?? null
+      let nextUser = body?.data?.user ?? null
+
+      if (token && nextUser) {
+        initializeSession(token, nextUser)
+      } else {
+        nextUser = await login(form.email, form.password)
+      }
+
       toast.success('Welcome — account created')
-      navigate('/', { replace: true })
+      const redirect = getDefaultDashboardPath(nextUser?.role)
+      navigate(redirect, { replace: true })
     } catch (err) {
       toast.error(err.message ?? 'Registration failed')
     } finally {

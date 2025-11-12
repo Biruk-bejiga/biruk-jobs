@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import { useAuth } from '../context/AuthContext'
+import { resolveApiUrl } from '../lib/apiClient'
 
 const getDefaultDashboardPath = (role) => {
   switch (role) {
@@ -18,7 +19,7 @@ const getDefaultDashboardPath = (role) => {
 
 const Register = () => {
   const navigate = useNavigate()
-  const { login } = useAuth()
+  const { login, initializeSession } = useAuth()
   const [role, setRole] = useState('employee')
   const [form, setForm] = useState({
     fullName: '',
@@ -74,7 +75,7 @@ const Register = () => {
         if (form.location) payload.location = form.location
       }
 
-      const res = await fetch('/api/auth/register', {
+  const res = await fetch(resolveApiUrl('/api/auth/register'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -92,10 +93,18 @@ const Register = () => {
         throw new Error(msg || 'Registration failed')
       }
 
-      // automatically sign in after register via login helper
-      const user = await login(form.email, form.password)
+      const body = await res.json()
+      const token = body?.data?.accessToken ?? null
+      let nextUser = body?.data?.user ?? null
+
+      if (token && nextUser) {
+        initializeSession(token, nextUser)
+      } else {
+        nextUser = await login(form.email, form.password)
+      }
+
       toast.success('Welcome — account created')
-      const redirect = getDefaultDashboardPath(user?.role)
+      const redirect = getDefaultDashboardPath(nextUser?.role)
       navigate(redirect, { replace: true })
     } catch (err) {
       toast.error(err.message ?? 'Registration failed')

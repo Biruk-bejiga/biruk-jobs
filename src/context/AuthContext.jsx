@@ -52,6 +52,14 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
+  const initializeSession = useCallback(
+    (token, userData) => {
+      persistToken(token ?? null);
+      setUser(userData ?? null);
+    },
+    [persistToken],
+  );
+
   const refreshAccessToken = useCallback(async () => {
     try {
   const response = await fetch(resolveApiUrl('/api/auth/refresh'), {
@@ -238,6 +246,7 @@ export const AuthProvider = ({ children }) => {
       authFetchJson,
       refreshAccessToken,
       persistToken,
+      initializeSession,
       accessToken,
     }),
     [
@@ -249,6 +258,7 @@ export const AuthProvider = ({ children }) => {
       authFetchJson,
       refreshAccessToken,
       persistToken,
+      initializeSession,
       accessToken,
     ],
   );
