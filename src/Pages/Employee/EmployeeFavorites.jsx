@@ -3,9 +3,11 @@ import { toast } from 'react-toastify';
 import { FiTrash2 } from 'react-icons/fi';
 import Spinner from '../../Comonent/Spinner';
 import { useAuth } from '../../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 const EmployeeFavorites = () => {
   const { authFetchJson } = useAuth();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
 
   const favoritesQuery = useQuery({
@@ -79,6 +81,15 @@ const EmployeeFavorites = () => {
             {favorite.job.isRemote ? (
               <span className="rounded-full bg-emerald-100 px-3 py-1 font-medium text-emerald-600">Remote</span>
             ) : null}
+          </div>
+          <div className="mt-4 flex justify-end gap-3">
+            <button
+              type="button"
+              onClick={() => navigate(`/employee/jobs/${favorite.job.id}`)}
+              className="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-500"
+            >
+              View details
+            </button>
           </div>
         </article>
       ))}

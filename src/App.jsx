@@ -123,6 +123,11 @@ const App = () => {
             >
               <Route index element={<EmployeeDashboard />} />
               <Route path='jobs' element={<EmployeeJobs />} />
+              <Route
+                path='jobs/:id'
+                element={<JobPage deleteJob={deleteJob} backToPath='/employee/jobs' backToLabel='Back to Jobs' />}
+                loader={jobLoader}
+              />
               <Route path='applications' element={<EmployeeApplications />} />
               <Route path='favorites' element={<EmployeeFavorites />} />
               <Route path='profile' element={<EmployeeProfile />} />

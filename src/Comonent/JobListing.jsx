@@ -3,7 +3,7 @@ import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { FaMapMarker } from 'react-icons/fa';
 
-const SUMMARY_PREVIEW_LIMIT = 220;
+const SUMMARY_PREVIEW_LIMIT = 90;
 const SUMMARY_COLLAPSED_MAX_HEIGHT = '3.6em';
 const SUMMARY_EXPANDED_MAX_HEIGHT = '1000px';
 
@@ -53,12 +53,14 @@ const JobListing = ({ job }) => {
 
   const isExpandable = baseSummary.length > SUMMARY_PREVIEW_LIMIT;
 
-  const summaryStyle = {
-    maxHeight: expanded ? SUMMARY_EXPANDED_MAX_HEIGHT : SUMMARY_COLLAPSED_MAX_HEIGHT,
-    transition: 'max-height 0.3s ease, opacity 0.3s ease',
-    opacity: expanded ? 1 : 0.95,
-    overflow: 'hidden',
-  };
+  const summaryStyle = isExpandable
+    ? {
+        maxHeight: expanded ? SUMMARY_EXPANDED_MAX_HEIGHT : SUMMARY_COLLAPSED_MAX_HEIGHT,
+        transition: 'max-height 0.3s ease, opacity 0.3s ease',
+        opacity: expanded ? 1 : 0.95,
+        overflow: 'hidden',
+      }
+    : undefined;
 
   const employmentLabel = formatEmploymentType(job.employmentType);
   const salaryLabel = formatSalaryRange(job.salaryMin, job.salaryMax, job.salaryCurrency);
@@ -83,7 +85,7 @@ const JobListing = ({ job }) => {
             onClick={() => setExpanded((prev) => !prev)}
             className="text-sm font-medium text-indigo-600 transition hover:text-indigo-500"
           >
-            {expanded ? 'Read less' : 'Read more'}
+            {expanded ? 'Show less' : 'Read more'}
           </button>
         ) : null}
 

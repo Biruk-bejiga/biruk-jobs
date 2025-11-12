@@ -48,11 +48,20 @@ const applicationStatusStyles = {
 };
 
 const applyFormSchema = z.object({
-  resumeUrl: z.string().url('Enter a valid résumé link').max(512, 'Résumé link is too long').optional(),
-  coverLetter: z.string().max(2000, 'Cover letter must be 2000 characters or less').optional(),
+  resumeUrl: z
+    .string()
+    .trim()
+    .min(1, 'Résumé link is required')
+    .url('Enter a valid résumé link')
+    .max(512, 'Résumé link is too long'),
+  coverLetter: z
+    .string()
+    .trim()
+    .min(1, 'Cover letter is required')
+    .max(2000, 'Cover letter must be 2000 characters or less'),
 });
 
-const JobPage = ({ deleteJob }) => {
+const JobPage = ({ deleteJob, backToPath = '/jobs', backToLabel = 'Back to Job Listings' }) => {
   const navigate = useNavigate();
   const job = useLoaderData();
   const jobId = job?.id;
@@ -97,13 +106,10 @@ const JobPage = ({ deleteJob }) => {
       if (!jobId) {
         throw new Error('Job not found');
       }
-      const body = {};
-      if (payload.resumeUrl) {
-        body.resumeUrl = payload.resumeUrl;
-      }
-      if (payload.coverLetter) {
-        body.coverLetter = payload.coverLetter;
-      }
+      const body = {
+        resumeUrl: payload.resumeUrl,
+        coverLetter: payload.coverLetter,
+      };
       const response = await authFetchJson(
         `/api/jobs/${jobId}/apply`,
         {
@@ -155,9 +161,9 @@ const JobPage = ({ deleteJob }) => {
 
     try {
       setIsDeleting(true);
-      await deleteJob(jobId);
+  await deleteJob(jobId);
       toast.success('Job deleted successfully!');
-      navigate('/jobs');
+  navigate(backToPath);
     } catch (error) {
       const message = error?.message ?? 'Failed to delete job. Please try again.';
       toast.error(message);
@@ -180,8 +186,8 @@ const JobPage = ({ deleteJob }) => {
     <>
       <section>
         <div className="container m-auto py-6 px-6">
-          <Link to="/jobs" className="flex items-center text-indigo-500 transition hover:text-indigo-600">
-            <FaArrowLeft className="mr-2" /> Back to Job Listings
+          <Link to={backToPath} className="flex items-center text-indigo-500 transition hover:text-indigo-600">
+            <FaArrowLeft className="mr-2" /> {backToLabel}
           </Link>
         </div>
       </section>
@@ -323,15 +329,10 @@ const JobPage = ({ deleteJob }) => {
                                   type="url"
                                   className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
                                   placeholder="https://..."
-                                  {...register('resumeUrl', {
-                                    setValueAs: (value) => {
-                                      if (typeof value !== 'string') {
-                                        return undefined;
-                                      }
-                                      const trimmed = value.trim();
-                                      return trimmed.length ? trimmed : undefined;
-                                    },
-                                  })}
+                                      {...register('resumeUrl', {
+                                        setValueAs: (value) =>
+                                          typeof value === 'string' ? value.trim() : '',
+                                      })}
                                 />
                                 {errors.resumeUrl ? (
                                   <p className="mt-1 text-xs text-rose-600">{errors.resumeUrl.message}</p>
@@ -348,13 +349,8 @@ const JobPage = ({ deleteJob }) => {
                                   className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
                                   placeholder="Share why you&apos;re a great fit..."
                                   {...register('coverLetter', {
-                                    setValueAs: (value) => {
-                                      if (typeof value !== 'string') {
-                                        return undefined;
-                                      }
-                                      const trimmed = value.trim();
-                                      return trimmed.length ? trimmed : undefined;
-                                    },
+                                    setValueAs: (value) =>
+                                      typeof value === 'string' ? value.trim() : '',
                                   })}
                                 />
                                 {errors.coverLetter ? (
@@ -416,6 +412,8 @@ const JobPage = ({ deleteJob }) => {
 
 JobPage.propTypes = {
   deleteJob: PropTypes.func.isRequired,
+  backToPath: PropTypes.string,
+  backToLabel: PropTypes.string,
 };
 
 export default JobPage;
