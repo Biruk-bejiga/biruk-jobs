@@ -1,7 +1,7 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import logo from '../assets/image/logo.png';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
-import { FiBriefcase, FiClipboard, FiHome, FiLogOut, FiMenu, FiSettings, FiUsers } from 'react-icons/fi';
+import { FiBriefcase, FiClipboard, FiHome, FiLogOut, FiMenu, FiMoon, FiSettings, FiSun, FiUsers } from 'react-icons/fi';
 import { useAuth } from '../context/AuthContext';
 
 const navItems = [
@@ -12,11 +12,27 @@ const navItems = [
   { to: '/employer/profile', icon: FiSettings, label: 'Profile' },
 ];
 
+const THEME_STORAGE_KEY = 'employer-dashboard-theme';
+
 const EmployerLayout = () => {
   const location = useLocation();
   const { user, logout } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [theme, setTheme] = useState(() => {
+    if (typeof window === 'undefined') {
+      return 'light';
+    }
+    return window.localStorage.getItem(THEME_STORAGE_KEY) ?? 'light';
+  });
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem(THEME_STORAGE_KEY, theme);
+    }
+  }, [theme]);
+
+  const isDark = theme === 'dark';
 
   const activeLabel = useMemo(() => {
     const match = navItems.find((item) =>
@@ -29,6 +45,10 @@ const EmployerLayout = () => {
     await logout();
   };
 
+  const toggleTheme = () => {
+    setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
+  };
+
   const toggleSidebarState = () => {
     const isDesktop = typeof window !== 'undefined' && window.matchMedia('(min-width: 1024px)').matches;
     if (isDesktop) {
@@ -39,34 +59,43 @@ const EmployerLayout = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900">
-      <div className="flex min-h-screen">
+    <div className={isDark ? 'dark' : ''}>
+      <div className="min-h-screen bg-slate-50 text-slate-900 transition-colors dark:bg-slate-950 dark:text-slate-100">
+        <div className="flex min-h-screen">
         <aside
-          className={`fixed inset-y-0 left-0 z-30 w-72 transform bg-white shadow-xl transition-transform duration-200 ease-in-out lg:border-r lg:border-slate-200 lg:static lg:translate-x-0 ${
+          className={`fixed inset-y-0 left-0 z-30 w-72 transform shadow-xl transition-transform duration-200 ease-in-out lg:static lg:translate-x-0 lg:border-r ${
             isCollapsed ? 'lg:w-24' : 'lg:w-72'
           } ${
-            sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-          }`}
+            isDark ? 'bg-slate-900 text-slate-100 lg:border-slate-800' : 'bg-white text-slate-900 lg:border-slate-200'
+          } ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}
         >
-          <div className="flex items-center justify-between gap-4 border-b border-slate-200 px-6 py-4">
+          <div className={`flex items-center justify-between gap-4 border-b px-6 py-4 ${isDark ? 'border-slate-800' : 'border-slate-200'}`}>
             <button
               type="button"
               onClick={toggleSidebarState}
               aria-label="Toggle navigation"
-              className="inline-flex items-center justify-center rounded-full border border-slate-200 p-2 text-slate-600 transition hover:bg-slate-100"
+              className={`inline-flex items-center justify-center rounded-full border p-2 transition ${
+                isDark ? 'border-slate-700 text-slate-300 hover:bg-slate-800' : 'border-slate-200 text-slate-600 hover:bg-slate-100'
+              }`}
             >
               <FiMenu className="text-xl" />
             </button>
             <NavLink className="flex flex-1 items-center gap-2" to="/">
               <img className="h-9 w-auto" src={logo} alt="React Jobs" />
-              <span className={`hidden text-xl font-semibold tracking-tight text-slate-900 md:block ${isCollapsed ? 'lg:hidden' : ''}`}>
+              <span
+                className={`hidden text-xl font-semibold tracking-tight md:block ${isCollapsed ? 'lg:hidden' : ''} ${
+                  isDark ? 'text-slate-100' : 'text-slate-900'
+                }`}
+              >
                 Dev Jobs
               </span>
             </NavLink>
             <button
               type="button"
               onClick={() => setSidebarOpen(false)}
-              className="rounded-lg border border-slate-200 px-2 py-1 text-sm text-slate-500 lg:hidden"
+              className={`rounded-lg border px-2 py-1 text-sm lg:hidden ${
+                isDark ? 'border-slate-700 text-slate-300' : 'border-slate-200 text-slate-500'
+              }`}
             >
               Close
             </button>
@@ -81,11 +110,19 @@ const EmployerLayout = () => {
                   end={item.end}
                   onClick={() => setSidebarOpen(false)}
                   className={({ isActive }) =>
-                    `flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition hover:bg-indigo-50 ${
-                      isActive ? 'bg-indigo-100 text-indigo-600' : 'text-slate-600'
-                    } ${
-                      isCollapsed ? 'lg:flex-col lg:items-center lg:gap-2 lg:px-2 lg:py-4 lg:text-xs' : ''
-                    }`
+                    [
+                      'flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition',
+                      isCollapsed ? 'lg:flex-col lg:items-center lg:gap-2 lg:px-2 lg:py-4 lg:text-xs' : '',
+                      isActive
+                        ? isDark
+                          ? 'bg-indigo-500/20 text-indigo-200'
+                          : 'bg-indigo-100 text-indigo-600'
+                        : isDark
+                        ? 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                        : 'text-slate-600 hover:bg-indigo-50',
+                    ]
+                      .filter(Boolean)
+                      .join(' ')
                   }
                 >
                   <Icon className="text-xl" />
@@ -94,8 +131,12 @@ const EmployerLayout = () => {
               );
             })}
           </nav>
-          <div className={`border-t border-slate-200 px-6 py-4 text-sm text-slate-500 ${isCollapsed ? 'lg:hidden' : ''}`}>
-            <p className="font-semibold text-slate-800">{user?.fullName}</p>
+          <div
+            className={`border-t px-6 py-4 text-sm ${
+              isDark ? 'border-slate-800 text-slate-400' : 'border-slate-200 text-slate-500'
+            } ${isCollapsed ? 'lg:hidden' : ''}`}
+          >
+            <p className={isDark ? 'font-semibold text-slate-100' : 'font-semibold text-slate-800'}>{user?.fullName}</p>
             <p>{user?.email}</p>
           </div>
         </aside>
@@ -111,19 +152,41 @@ const EmployerLayout = () => {
         ) : null}
 
         <div className="flex min-h-screen flex-1 flex-col">
-          <header className="flex items-center justify-between border-b border-indigo-600 bg-indigo-700 px-6 py-4 text-white">
+          <header
+            className={`flex items-center justify-between px-6 py-4 ${
+              isDark
+                ? 'border-b border-slate-800 bg-slate-900 text-slate-100'
+                : 'border-b border-indigo-600 bg-indigo-700 text-white'
+            }`}
+          >
             <div>
-              <p className="text-sm text-indigo-200">Employer Console</p>
-              <h1 className="text-lg font-semibold text-white">{activeLabel || 'Overview'}</h1>
+              <p className={isDark ? 'text-sm text-slate-400' : 'text-sm text-indigo-200'}>Employer Console</p>
+              <h1 className={isDark ? 'text-lg font-semibold text-slate-100' : 'text-lg font-semibold text-white'}>
+                {activeLabel || 'Overview'}
+              </h1>
             </div>
             <div className="flex items-center gap-3">
               <button
                 type="button"
                 onClick={() => setSidebarOpen((prev) => !prev)}
-                className="inline-flex items-center gap-2 rounded-xl border border-transparent px-3 py-2 text-sm font-medium text-white transition lg:hidden"
+                className={`inline-flex items-center gap-2 rounded-xl border border-transparent px-3 py-2 text-sm font-medium transition lg:hidden ${
+                  isDark ? 'text-slate-100' : 'text-white'
+                }`}
               >
                 <FiMenu className="text-lg" />
                 Menu
+              </button>
+              <button
+                type="button"
+                onClick={toggleTheme}
+                className={`inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-sm font-semibold transition ${
+                  isDark
+                    ? 'border-slate-700 bg-slate-800 text-slate-100 hover:bg-slate-700'
+                    : 'border-white/20 bg-white/10 text-white hover:bg-white/20'
+                }`}
+              >
+                {isDark ? <FiSun className="text-lg" /> : <FiMoon className="text-lg" />}
+                <span className="hidden sm:inline">{isDark ? 'Light mode' : 'Dark mode'}</span>
               </button>
               <button
                 type="button"
@@ -135,9 +198,10 @@ const EmployerLayout = () => {
               </button>
             </div>
           </header>
-          <main className="flex-1 bg-slate-50 px-0 py-0 sm:px-0 lg:px-0">
+          <main className={`${isDark ? 'flex-1 bg-slate-950' : 'flex-1 bg-slate-50'} px-0 py-0 sm:px-0 lg:px-0`}>
             <Outlet />
           </main>
+        </div>
         </div>
       </div>
     </div>
