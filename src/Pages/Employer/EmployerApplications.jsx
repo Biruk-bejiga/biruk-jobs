@@ -25,16 +25,46 @@ const EmployerApplications = () => {
     },
   });
 
+  const jobs = useMemo(() => jobsQuery.data ?? [], [jobsQuery.data]);
+
   const applicationsQuery = useQuery({
-    queryKey: ['employer', 'applications', jobId],
-    enabled: Boolean(jobId),
+    queryKey: ['employer', 'applications', jobId || 'all', jobs.map((job) => job.id)],
+    enabled: jobsQuery.isSuccess,
     queryFn: async () => {
-      const response = await authFetchJson(`/api/employers/jobs/${jobId}/applications`, {}, 'Failed to load applications');
-      return response?.data ?? [];
+      if (!jobs.length) {
+        return [];
+      }
+
+      const targetJobs = jobId ? jobs.filter((job) => job.id === jobId) : jobs;
+
+      if (!targetJobs.length) {
+        return [];
+      }
+
+      const fetchForJob = async (job) => {
+        const response = await authFetchJson(
+          `/api/employers/jobs/${job.id}/applications`,
+          {},
+          'Failed to load applications',
+        );
+        const entries = response?.data ?? [];
+        return entries.map((entry) => ({
+          ...entry,
+          job: {
+            id: job.id,
+            title: job.title,
+            location: job.location,
+          },
+        }));
+      };
+
+      const results = await Promise.all(targetJobs.map(fetchForJob));
+      return results
+        .flat()
+        .sort((a, b) => new Date(b.application.submittedAt) - new Date(a.application.submittedAt));
     },
   });
 
-  const jobs = useMemo(() => jobsQuery.data ?? [], [jobsQuery.data]);
   const applications = useMemo(() => applicationsQuery.data ?? [], [applicationsQuery.data]);
 
   return (
@@ -74,28 +104,29 @@ const EmployerApplications = () => {
         </div>
       ) : null}
 
-      {jobId && applicationsQuery.isLoading ? (
+      {applicationsQuery.isLoading ? (
         <div className="flex justify-center py-10">
           <Spinner loading />
         </div>
       ) : null}
 
-      {jobId && applicationsQuery.isError ? (
+      {!applicationsQuery.isLoading && applicationsQuery.isError ? (
         <div className="rounded-xl border border-red-200 bg-red-50 px-6 py-4 text-sm text-red-700">
           {applicationsQuery.error?.message ?? 'Unable to load applications'}
         </div>
       ) : null}
 
-      {jobId && !applicationsQuery.isLoading && !applicationsQuery.isError ? (
+      {!applicationsQuery.isLoading && !applicationsQuery.isError ? (
         applications.length === 0 ? (
           <div className="rounded-xl border border-slate-200 bg-white px-6 py-10 text-center text-sm text-slate-500">
-            No applications yet. Share your job to reach more candidates.
+            {jobId ? 'No applications yet. Share your job to reach more candidates.' : 'No applications found across your jobs yet.'}
           </div>
         ) : (
           <div className="overflow-hidden rounded-2xl border border-slate-200">
             <table className="min-w-full divide-y divide-slate-200">
               <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
                 <tr>
+                  <th className="px-4 py-3 font-semibold">Job</th>
                   <th className="px-4 py-3 font-semibold">Applicant</th>
                   <th className="px-4 py-3 font-semibold">Headline</th>
                   <th className="px-4 py-3 font-semibold">Experience</th>
@@ -108,6 +139,12 @@ const EmployerApplications = () => {
                   const statusClass = statusPill[entry.application.status] ?? statusPill.submitted;
                   return (
                     <tr key={entry.application.id}>
+                      <td className="px-4 py-4">
+                        <div className="font-medium text-slate-900">{entry.job?.title ?? '—'}</div>
+                        {entry.job?.location ? (
+                          <div className="text-xs text-slate-500">{entry.job.location}</div>
+                        ) : null}
+                      </td>
                       <td className="px-4 py-4">
                         <div className="font-medium text-slate-900">{entry.applicant.fullName}</div>
                         <div className="text-xs text-slate-500">{entry.applicant.email}</div>
