@@ -16,8 +16,8 @@ const Navbar = () => {
 
   const linkClass = ({ isActive }) =>
     isActive
-      ? 'rounded-lg px-3 py-2 bg-white text-indigo-700 transition hover:bg-slate-100'
-      : 'rounded-lg px-3 py-2 text-white transition hover:bg-indigo-600'
+      ? 'rounded-lg px-3 py-2 bg-white text-emerald-700 transition hover:bg-slate-100'
+      : 'rounded-lg px-3 py-2 text-white transition hover:bg-emerald-600'
 
   const dashboardPath = getDashboardPath(user?.role)
 
@@ -39,7 +39,7 @@ const Navbar = () => {
   const showMenu = isAuthenticated
 
   return (
-    <nav className="border-b border-indigo-500 bg-indigo-700">
+    <nav className="border-b border-emerald-500 bg-emerald-700">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-20 items-center justify-between">
           <NavLink className="flex items-center gap-2" to="/">
@@ -54,7 +54,7 @@ const Navbar = () => {
                 onClick={handleToggleMenu}
                 aria-label="Toggle navigation menu"
                 aria-expanded={isMenuOpen}
-                className="inline-flex items-center justify-center rounded-md p-2 text-white transition hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
+                className="inline-flex items-center justify-center rounded-md p-2 text-white transition hover:bg-emerald-600 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
               >
                 <svg
                   className="h-6 w-6"
@@ -88,7 +88,7 @@ const Navbar = () => {
               <button
                 type="button"
                 onClick={handleSignOut}
-                className="rounded-lg px-3 py-2 text-sm font-semibold text-white transition hover:bg-indigo-600"
+                className="rounded-lg px-3 py-2 text-sm font-semibold text-white transition hover:bg-emerald-600"
               >
                 Sign out
               </button>
@@ -99,7 +99,7 @@ const Navbar = () => {
 
       {showMenu ? (
         <div className={`${isMenuOpen ? 'max-h-screen opacity-100' : 'max-h-0 opacity-0'} overflow-hidden transition-all duration-200 md:hidden`}>
-          <div className="space-y-1 border-t border-indigo-600 bg-indigo-700 px-4 pb-4 pt-2">
+          <div className="space-y-1 border-t border-emerald-600 bg-emerald-700 px-4 pb-4 pt-2">
             {user?.role === 'employer' ? (
               <NavLink to="/employer/jobs/new" onClick={handleCloseMenu} className={mobileLinkClass}>
                 Post a job
@@ -114,7 +114,7 @@ const Navbar = () => {
                 await handleSignOut()
                 handleCloseMenu()
               }}
-              className="block w-full rounded-lg px-3 py-2 text-left text-sm font-semibold text-white transition hover:bg-indigo-600"
+              className="block w-full rounded-lg px-3 py-2 text-left text-sm font-semibold text-white transition hover:bg-emerald-600"
             >
               Sign out
             </button>

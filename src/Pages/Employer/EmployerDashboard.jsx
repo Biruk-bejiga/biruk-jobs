@@ -51,7 +51,7 @@ const EmployerDashboard = () => {
             {statCards.map((card) => (
               <Card key={card.label}>
                 <dt className="text-sm font-medium text-slate-500 dark:text-slate-300">{card.label}</dt>
-                <dd className="mt-2 text-2xl font-semibold text-indigo-600 dark:text-indigo-300">{card.value}</dd>
+                <dd className="mt-2 text-2xl font-semibold text-emerald-600 dark:text-emerald-300">{card.value}</dd>
               </Card>
             ))}
           </div>
@@ -72,7 +72,7 @@ const EmployerDashboard = () => {
               </div>
               <div>
                 <dt className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Website</dt>
-                <dd className="mt-2 text-sm text-indigo-600 dark:text-indigo-300">
+                <dd className="mt-2 text-sm text-emerald-600 dark:text-emerald-300">
                   {profile?.companyWebsite ? (
                     <a href={profile.companyWebsite} target="_blank" rel="noreferrer" className="hover:underline">
                       {profile.companyWebsite}

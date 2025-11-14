@@ -6,7 +6,7 @@ const Hero = ({ title = 'Connecting clients in need to freelancers who deliver',
     <section className="relative mb-4 py-20">
       <div className="absolute inset-0">
         <img src={heroBackground} alt="" className="h-full w-full object-cover" />
-        <div className="absolute inset-0 bg-indigo-900/75" aria-hidden="true" />
+        <div className="absolute inset-0 bg-emerald-900/75" aria-hidden="true" />
       </div>
       <div className="relative mx-auto flex max-w-7xl flex-col items-center px-4 sm:px-6 lg:px-8">
         <div className="text-center">

@@ -57,7 +57,7 @@ const EmployeeApplications = () => {
 
   if (applications.length === 0) {
     return (
-      <div className="rounded-2xl border border-slate-200 bg-white px-6 py-12 text-center text-sm text-slate-500">
+      <div className="rounded-2xl border border-slate-200 bgslate- px-6 py-12 text-center text-sm text-slate-500">
         You haven’t applied to any roles yet. Browse jobs to find your next opportunity.
       </div>
     );
@@ -74,7 +74,7 @@ const EmployeeApplications = () => {
             <th className="px-4 py-3 font-semibold text-right">Actions</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-slate-200 bg-white text-sm text-slate-700">
+        <tbody className="divide-y divide-slate-200 bg-slate text-sm text-slate-700">
           {applications.map((entry) => {
             const statusClass = statusStyles[entry.application.status] ?? statusStyles.submitted;
             return (

@@ -67,7 +67,7 @@ const EmployeeJobs = () => {
         </p>
       </header>
 
-      <div className="grid gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:grid-cols-4">
+      <div className="grid gap-4 rounded-2xl border border-slate-200 bg-slate p-5 shadow-sm md:grid-cols-4">
         <div className="md:col-span-2">
           <label className="text-xs font-medium uppercase tracking-wide text-slate-500" htmlFor="job-search">
             Search
@@ -123,7 +123,7 @@ const EmployeeJobs = () => {
         <label className="flex items-center gap-3 rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-600">
           <input
             type="checkbox"
-            className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+            className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
             checked={remoteOnly}
             onChange={(event) => setRemoteOnly(event.target.checked)}
           />
@@ -134,7 +134,7 @@ const EmployeeJobs = () => {
       <button
         type="button"
         onClick={() => query.refetch()}
-        className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 transition hover:border-indigo-200 hover:text-indigo-600"
+        className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-slate px-4 py-2 text-sm font-medium text-slate-600 transition hover:border-emerald-200 hover:text-emerald-600"
       >
         <FiSliders />
         Apply filters
@@ -149,13 +149,13 @@ const EmployeeJobs = () => {
           {query.error?.message ?? 'Failed to load jobs'}
         </div>
       ) : jobs.length === 0 ? (
-        <div className="rounded-2xl border border-slate-200 bg-white px-6 py-12 text-center text-sm text-slate-500">
+        <div className="rounded-2xl border border-slate-200 bg-slate px-6 py-12 text-center text-sm text-slate-500">
           No jobs matched your filters. Adjust your search to discover more opportunities.
         </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2">
           {jobs.map((job) => (
-            <article key={job.id} className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <article key={job.id} className="rounded-2xl border border-slate-200 bg-slate p-6 shadow-sm">
               <div className="flex items-start justify-between">
                 <div>
                   <h3 className="text-lg font-semibold text-slate-900">{job.title}</h3>
@@ -165,7 +165,7 @@ const EmployeeJobs = () => {
                   <button
                     type="button"
                     onClick={() => handleFavorite(job.id)}
-                    className="inline-flex items-center gap-1 rounded-full border border-slate-200 px-3 py-1 text-xs font-medium text-slate-600 hover:border-indigo-200 hover:text-indigo-600"
+                    className="inline-flex items-center gap-1 rounded-full border border-slate-200 px-3 py-1 text-xs font-medium text-slate-600 hover:border-emerald-200 hover:text-emerald-600"
                   >
                     <FiBookmark />
                     Save
@@ -184,7 +184,7 @@ const EmployeeJobs = () => {
                 <button
                   type="button"
                   onClick={() => navigate(`/employee/jobs/${job.id}`)}
-                  className="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-500"
+                  className="inline-flex items-center justify-center rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-slate transition hover:bg-emerald-500"
                 >
                   View details
                 </button>
