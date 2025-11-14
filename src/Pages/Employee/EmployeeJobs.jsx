@@ -170,17 +170,7 @@ const EmployeeJobs = () => {
                     <FiBookmark />
                     Save
                   </button>
-                  {user?.role === 'employee' && job.status === 'published' ? (
-                    <>
-                      <button
-                        type="button"
-                        onClick={() => handleApply(job.id)}
-                        className="inline-flex items-center gap-1 rounded-full bg-indigo-600 px-3 py-1 text-xs font-medium text-white hover:bg-indigo-500"
-                      >
-                        Apply
-                      </button>
-                    </>
-                  ) : null}
+                  
                 </div>
               </div>
               <p className="mt-3 text-sm text-slate-600 line-clamp-3">{job.summary ?? job.description}</p>
