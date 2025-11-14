@@ -2,9 +2,8 @@ import { useCallback, useMemo } from 'react'
 import { Route, createBrowserRouter, createRoutesFromElements, RouterProvider } from 'react-router-dom'
 import { ToastContainer } from 'react-toastify'
 import { ConfirmProvider } from './Comonent/ConfirmProvider'
-import HomePage from './Pages/HomePage'
+import LandingPage from './Pages/LandingPage'
 import MainLayout from './layouts/MainLayout'
-import JobsPage from './Pages/JobsPage'
 import NotFoundPage from './Comonent/NotFoundPage'
 import JobPage from './Pages/JobPage'
 import { jobLoader } from './Pages/jobLoader'
@@ -71,13 +70,11 @@ const App = () => {
         createRoutesFromElements(
           <>
             <Route path='/' element={<MainLayout />}>
-              <Route index element={<HomePage />} />
-              <Route path='/jobs' element={<JobsPage />} />
-              <Route path='/jobs/:id' element={<JobPage deleteJob={deleteJob} />} loader={jobLoader} />
+              <Route index element={<LandingPage />} />
               <Route path='/login' element={<LoginPage />} />
-                <Route path='/register' element={<Register />} />
-                <Route path='/register/employee' element={<RegisterEmployee />} />
-                <Route path='/register/employer' element={<RegisterEmployer />} />
+              <Route path='/register' element={<Register />} />
+              <Route path='/register/employee' element={<RegisterEmployee />} />
+              <Route path='/register/employer' element={<RegisterEmployer />} />
               <Route path='*' element={<NotFoundPage />} />
             </Route>
             <Route
