@@ -43,7 +43,7 @@ const EmployeeLayout = () => {
                             src={logo}
                             alt="React Jobs"
                           />
-                          <span className="hidden md:block text-white text-2xl font-bold ml-2"
+                          <span className="hidden md:block text-black text-2xl font-bold ml-2"
                             >dev Jobs</span>
                         </NavLink>
             <button

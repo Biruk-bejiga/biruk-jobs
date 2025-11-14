@@ -41,7 +41,7 @@ const Navbar = () => {
         <div className="flex h-20 items-center justify-between">
           <NavLink className="flex items-center gap-2" to="/">
             <img className="h-10 w-auto" src={logo} alt="Dev Jobs" />
-            <span className="hidden text-2xl font-bold text-white md:block">dev Jobs</span>
+            <span className="hidden text-2xl font-bold text-white md:block">Dev Jobs</span>
           </NavLink>
 
           <div className="flex items-center md:hidden">
